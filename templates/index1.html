@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Livermore Urban Heat Island Mapping</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap" rel="stylesheet">
+
+    <style>
+        button {
+          background-color: #007BFF;  /* Bootstrap blue */
+          color: yellow;
+          font-size: 14pt;
+          border: none;
+          padding: 17px 15px;
+          margin: 5px;
+          cursor: pointer;
+          border-radius: 4px;
+        }
+      
+        button:disabled {
+          background-color: #5a9bd4;  /* lighter blue when disabled */
+          color: #eee;
+          cursor: not-allowed;
+        }
+      
+        button:hover:enabled {
+          background-color: #0056b3;  /* darker blue on hover */
+        }
+      </style>
+
+</head>
+
+<body>
+    <h1>Tri-Valley Urban Heat Island Study</h1>
+
+    <img src="{{ url_for('static', filename='QuestLogo.png') }}" alt="Quest Science Center Logo" class="logo" >
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+    <div style="text-align:center; margin-bottom: 10px;"></div>
+
+       <!-- Buttons -->
+
+    <button id="registrationBtn" onclick="handleRegistration()">Homepage</button>
+    <button id="processBtn"  onclick="loadIframe('/renderprocessdata')" disabled>(Re)Process Sensor Data</button>
+    <button id="heatmapBtn" onclick="loadIframe('/map')" disabled>Temperature Map by Route</button>  
+    <button id="tempPlotBtn" onclick="loadIframe('/temperatureplot')" disabled>Sensor Temperatures </button>
+    <button id="metadataBtn" onclick="loadContents('/metadata')" disabled>Metadata</button>
+    <button id="arcgisBtn" onclick="loadIframe('/arcgis')" disabled>Prepare ArcGIS data  </button>
+
+    <!-- <button   onclick="loadIframe('/uploadCSV')" >Upload CSV</button>   -->
+
+    
+    <div style="text-align:center; margin-bottom: 25px;"></div>
+
+    <!-- Load HTML content into this iframe -->
+    <iframe 
+    id="contentFrame"
+    style="width: 100%; height: 900pt; border: none; overflow: auto;z-index: 200;"
+    scrolling="yes"
+    onload="console.log('✅ iframe loaded:', this.src)"
+    onerror="console.error('❌ iframe failed to load:', this.src)">
+  </iframe>
+  
+    
+    
+    
+    <div class="banner">Tri-Valley Youth Climate Action Project</div>
+
+
+    <script>
+        function loadIframe(endpoint) {
+            console.log("🔄 In index.html: loadIframe triggered with:", endpoint);
+            document.getElementById('contentFrame').src = endpoint;
+        }
+        function loadContents(endpoint) {
+            console.log("🔄 In index.html: loadContents triggered with:", endpoint)  ;
+            document.getElementById('contentFrame').src = endpoint;
+        }
+
+        function handleRegistration() {
+            loadContents('/registration');
+            
+            // Enable the other buttons
+            document.getElementById('processBtn').disabled = false;
+            document.getElementById('heatmapBtn').disabled = false;
+            document.getElementById('tempPlotBtn').disabled = false;
+            document.getElementById('metadataBtn').disabled = false;
+            document.getElementById('arcgisBtn').disabled = true;
+            
+            
+        }
+
+         // Execute handleRegistration once the DOM is fully loaded
+         document.addEventListener('DOMContentLoaded', function() {
+            console.log("🚀 DOMContentLoaded event fired, calling handleRegistration()");
+            handleRegistration();
+        });
+
+    </script>
+   
+ 
+</body>
+
+</html>

@@ -1,0 +1,9 @@
+# hypercorn_config.toml
+bind = ["127.0.0.1:5002"]
+
+loglevel = "debug"
+accesslog = "-"
+errorlog = "-"
+workers = 1
+reload = true
+

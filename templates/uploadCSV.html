@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Presigned S3 Upload</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    pre {
+      background-color: #f0f0f0;
+      padding: 10px;
+      max-width: 800px;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Presigned URL + Upload Test</h1>
+
+  <p>This test will request a presigned URL for <strong>mytest_001.csv</strong> and upload a dummy CSV file.</p>
+  <button onclick="runTest()">Run Test</button>
+
+  <h3>Result:</h3>
+  <pre id="output"></pre>
+
+  <script>
+    async function runTest() {
+      const output = document.getElementById('output');
+      output.textContent = '🔄 Requesting presigned URL...';
+
+      const filename = 'mytest_001.csv';
+
+      try {
+        // Step 1: Request presigned URL
+        const res = await fetch('http://mobile.quest-science.net/get_presigned_url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename })
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          output.textContent = '❌ Error: ' + (err.error || res.status);
+          return;
+        }
+
+        const { uploadUrl, publicUrl } = await res.json();
+        output.textContent = '✅ Presigned URL received.\n\n' + uploadUrl + '\n\n⏳ Uploading file...';
+
+        // Step 2: Create dummy CSV file
+        const csvContent = 'name,temperature\nDon,22.5\nAlice,23.1\n';
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+
+
+        // Step 3: Upload to S3 using presigned URL
+        const uploadRes = await fetch(uploadUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'text/csv'
+          },
+          body: blob
+        });
+
+
+        if (!uploadRes.ok) {
+          output.textContent += '\n❌ Upload failed: ' + uploadRes.status;
+          return;
+        }
+
+        output.textContent += `\n✅ Upload succeeded!\n\nPublic URL:\n${publicUrl}`;
+      } catch (err) {
+        output.textContent = '❌ Exception: ' + err.message;
+      }
+    }
+  </script>
+
+</body>
+</html>
+
+

@@ -26,3 +26,18 @@ def generate_timestamps(start_date, end_date):
     while current_date < end_date:
         yield int(current_date.timestamp()), int((current_date + timedelta(days=1)).timestamp())
         current_date += timedelta(days=1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

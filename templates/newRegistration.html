@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Campaign</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Import the Inter font for a modern look */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light background for modern look */
+            color: #333;
+            /* Using Tailwind for margin and flex layout on body */
+        }
+
+        /* Custom background colors for alternating rows, based on your previous definitions */
+        .odd-row-bg {
+            background-color: #ecfcf1; /* Lighter shade of green */
+        }
+        .even-row-bg {
+            background-color: #e0f8e9; /* Slightly darker shade of green */
+        }
+
+        /* Hover effect for rows */
+        .odd-row-bg:hover, .even-row-bg:hover {
+            background-color: #d1f7df; /* Hover effect */
+        }
+
+        /* Styling for checkboxes and radio buttons */
+        input[type="radio"], input[type="checkbox"] {
+            transform: scale(1.2); /* Slightly larger checkboxes/radios */
+            cursor: pointer;
+            /* Tailwind will further style these if using @tailwindcss/forms plugin */
+        }
+    </style>
+</head>
+<body class="p-5 flex flex-col items-center min-h-screen">
+
+    <h1 class="text-3xl font-bold text-gray-800 mb-4 text-center">Select a Campaign</h1>
+    <h3 class="text-xl text-gray-700 mb-6 text-center">Ordered by run date newest to oldest</h3>
+    
+    <div class="mb-6 text-center">
+        <input type="radio" id="show_all" name="visibility" value="show_all" checked class="form-radio h-5 w-5 text-blue-600"> 
+        <label for="show_all" class="ml-2 mr-4 text-gray-700 cursor-pointer">Show Active Campaigns</label>
+        <input type="radio" id="show_hidden" name="visibility" value="show_hidden" class="form-radio h-5 w-5 text-blue-600">
+        <label for="show_hidden" class="ml-2 text-gray-700 cursor-pointer">Show All Campaigns (including Hidden)</label>
+    </div>
+
+    <!-- The form wraps the dynamically generated table content, allowing radio button submission -->
+    <!-- Table width is set to 90% of the viewport width -->
+    <form action="/submit_registration" method="POST" id="campaignForm" class="w-[90vw]">
+        <div class="border-4 border-black rounded-lg overflow-hidden shadow-xl flex flex-col" style="max-height: 70vh;">
+            <div class="flex-shrink-0 bg-gray-300 text-black font-bold border-b-2 border-black sticky top-0 z-10">
+                <div class="flex text-center">
+                    <!-- Updated Header cell widths -->
+                    <div class="p-3 w-[5%] border-r-2 border-black flex items-center justify-center">Select</div>
+                    <div class="p-3 w-[15%] border-r-2 border-black flex items-center justify-center">Run Date</div>
+                    <div class="p-3 w-[25%] border-r-2 border-black flex items-center justify-center">Campaign ID</div>
+                    <div class="p-3 w-[25%] border-r-2 border-black flex items-center justify-center">Title</div>
+                    <div class="p-3 w-[25%] border-r-2 border-black flex items-center justify-center">Owners</div>
+                    <div class="p-3 w-[5%] flex items-center justify-center">Hide</div>
+                </div>
+            </div>
+
+            <div id="campaignRadios" class="flex-grow overflow-y-auto">
+                <div class="flex items-center justify-center h-full p-4 text-gray-500" id="loading-indicator">
+                    Loading campaigns...
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <script>
+        // Get references to the radio buttons for showing hidden/all campaigns
+        const showAllRadio = document.getElementById('show_all');
+        const showHiddenRadio = document.getElementById('show_hidden');
+        const campaignForm = document.getElementById('campaignForm'); // Reference to the form
+
+        // Add event listeners to trigger loadCampaigns on change
+        showAllRadio.addEventListener('change', loadCampaigns);
+        showHiddenRadio.addEventListener('change', loadCampaigns);
+
+        /**
+         * Fetches campaign data from the backend and renders it into the table.
+         * It sends the visibility preference (show hidden or not) to the backend.
+         */
+        async function loadCampaigns() {
+            const tableBody = document.getElementById('campaignRadios'); // This is now the scrollable body div
+            
+            // Display a loading message while fetching data
+            tableBody.innerHTML = `
+                <div class="flex items-center justify-center h-full p-4 text-gray-500" id="loading-indicator">
+                    Loading campaigns...
+                </div>
+            `;
+
+            // Determine the visibility setting based on which radio button is checked
+            const showHidden = showHiddenRadio.checked; 
+
+            try {
+                // Make a POST request to the backend with the visibility preference
+                const response = await fetch('/get_campaign_locations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    // Send the 'show_hidden' status in the request body as JSON
+                    body: JSON.stringify({ show_hidden: showHidden }) 
+                });
+
+                // Check if the response was successful (e.g., HTTP status 200-299)
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`HTTP error! status: ${response.status}, details: ${errorData.error || 'Unknown error'}`);
+                }
+
+                const result = await response.json();
+                const campaigns = result.campaigns;
+                const selected = result.selected; // The ID of the currently selected campaign from the backend
+
+                // Clear previous content before adding new rows
+                tableBody.innerHTML = ''; 
+
+                // If no campaigns are available, display a message and exit
+                if (!Array.isArray(campaigns) || campaigns.length === 0) {
+                    tableBody.innerHTML = '<div class="p-4 text-gray-600 text-center">No campaigns available.</div>';
+                    return;
+                }
+
+                // Iterate over each campaign and create a new row for it
+                campaigns.forEach((campaign, index, arr) => { 
+                    const id = campaign.campaign_id ?? 'Unknown';
+
+                    // Create the row div
+                    const rowDiv = document.createElement('div');
+                    // This is where the 'border-b-2' was originally, causing the breaks
+                    rowDiv.className = `flex text-center items-center p-3 border-b-2 border-gray-400 last:border-b-0 ${index % 2 === 0 ? 'even-row-bg' : 'odd-row-bg'}`;
+
+                    // Column 1: Radio button for campaign selection - 5% width
+                    const cellSelect = document.createElement('div');
+                    // No conditional border-bottom here
+                    cellSelect.className = 'w-[5%] flex items-center justify-center border-r-2 border-black';
+                    const radio = document.createElement('input');
+                    radio.type = 'radio';
+                    radio.name = 'campaign_id'; // Name for the radio button group
+                    radio.value = id;
+                    radio.className = 'form-radio h-5 w-5 text-green-600'; // Tailwind class for styling
+                    if (id === selected) {
+                        radio.checked = true;
+                    }
+                    // Add event listener to submit the form when a radio button is changed
+                    radio.addEventListener('change', () => requestAnimationFrame(() => campaignForm.submit()));
+                    cellSelect.appendChild(radio);
+                    rowDiv.appendChild(cellSelect);
+
+                    // Column 2: Run Date - 15% width
+                    const cellRunDate = document.createElement('div');
+                    cellRunDate.className = 'w-[15%] flex items-center justify-center border-r-2 border-black';
+                    cellRunDate.textContent = campaign.run_date ?? '';
+                    rowDiv.appendChild(cellRunDate);
+
+                    // Column 3: Campaign ID - 25% width
+                    const cellCampaignId = document.createElement('div');
+                    cellCampaignId.className = 'w-[25%] flex items-center justify-center border-r-2 border-black';
+                    cellCampaignId.textContent = campaign.campaign_id ?? '';
+                    rowDiv.appendChild(cellCampaignId);
+
+                    // Column 4: Title - 25% width
+                    const cellTitle = document.createElement('div');
+                    cellTitle.className = 'w-[25%] flex items-center justify-center border-r-2 border-black';
+                    cellTitle.textContent = campaign.campaign_title ?? '';
+                    rowDiv.appendChild(cellTitle);
+
+                    // Column 5: Owners - 25% width
+                    const cellOwners = document.createElement('div');
+                    cellOwners.className = 'w-[25%] flex items-center justify-center border-r-2 border-black';
+                    cellOwners.textContent = campaign.owners ?? '';
+                    rowDiv.appendChild(cellOwners);
+
+                    // Column 6: Hide checkbox - 5% width
+                    const cellHide = document.createElement('div');
+                    cellHide.className = 'w-[5%] flex items-center justify-center'; // No right border on last cell, no conditional bottom border here
+                    const hiddenCheckbox = document.createElement('input'); 
+                    hiddenCheckbox.type = 'checkbox';
+                    hiddenCheckbox.name = 'campaign_hidden_' + id; // Unique name for form submission
+                    hiddenCheckbox.value = id;
+                    hiddenCheckbox.className = 'form-checkbox h-5 w-5 text-red-600'; // Tailwind class for styling
+                    if (campaign.hidden) { 
+                        hiddenCheckbox.checked = true;
+                    }
+                    
+                    // Event listener for updating hidden status via AJAX
+                    hiddenCheckbox.addEventListener('change', async (event) => {
+                        const isHidden = event.target.checked;
+                        try {
+                            const updateResponse = await fetch('/update_hidden', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ 
+                                    campaign_id: id, 
+                                    hidden: isHidden 
+                                })
+                            });
+                            if (!updateResponse.ok) {
+                                const errorData = await updateResponse.json();
+                                console.error('Failed to update hidden status:', errorData.error || 'Unknown error');
+                                // Using a simple alert for demonstration, consider a custom modal in a production app
+                                alert('Failed to update campaign hidden status.'); 
+                                event.target.checked = !isHidden; // Revert checkbox state if update fails
+                            } else {
+                                console.log(`Campaign ${id} hidden status updated to ${isHidden}`);
+                            }
+                        } catch (updateErr) {
+                            console.error('Error updating hidden status:', updateErr);
+                            // Using a simple alert for demonstration, consider a custom modal in a production app
+                            alert('An error occurred while updating hidden status.'); 
+                            event.target.checked = !isHidden; // Revert checkbox state on network error
+                        }
+                    });
+                    
+                    cellHide.appendChild(hiddenCheckbox);
+                    rowDiv.appendChild(cellHide);
+
+                    // Append the constructed row to the table body
+                    tableBody.appendChild(rowDiv);
+                });
+
+            } catch (err) {
+                console.error('Error loading campaigns:', err);
+                tableBody.innerHTML = `<div class="p-4 text-red-600 text-center">Error loading campaigns: ${err.message}. Please ensure your backend is running and accessible.</div>`;
+            }
+        }
+
+        // Call loadCampaigns on page load to initially populate the campaigns
+        window.onload = loadCampaigns; 
+    </script>
+
+</body>
+</html>

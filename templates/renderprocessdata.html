@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Process Sensor Data</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    label {
+      font-weight: bold;
+    }
+    input[type="text"], input[type="number"] {
+      width: 200px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1em;
+    }
+    #feedback {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    .help-icon {
+      cursor: pointer;
+      margin-left: 5px;
+      font-size: 0.9em;
+    }
+    .help-text {
+      display: none;
+      margin-left: 10px;
+      color: red;
+      font-style: italic;
+    }
+    #statusMessage {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>(Re)Process Sensor Data<span class="help-icon" onclick="toggleHelp('heading')">ℹ️</span></h1>
+
+<span class="help-text" id="heading">You don't necessarily need to recompute values.  The prior result is available in other tabs.</span><br>
+  <h2 id="currentSelectionDisplay">
+    Current campaign id:
+    <span style="color: red;">{{ campaign_id | default('NONE') }}</span>
+  </h2>
+
+  <form id="processingForm">
+
+    <input type="hidden" id="process_id" value="{{ campaign_id | default('UNKNOWN') }}">
+
+    <label for="start_time_adjustment_minutes">
+      Prune (ie, remove) starting data in minutes:
+      <span class="help-icon" onclick="toggleHelp('startHelp')">ℹ️</span>
+    </label>
+    <span class="help-text" id="startHelp">Begin analysis after removing the specified minutes from the beginning of the collected data<br>
+    Enter 0.0 to use all data at beginning.</span><br>
+    <input type="text" id="start_time_adjustment_minutes" value="{{ start_time_adjustment_minutes }}">
+
+    <label for="end_time_adjustment_minutes">
+    </br>Prune (ie, remove) ending data in minutes:
+      <span class="help-icon" onclick="toggleHelp('endHelp')">ℹ️</span>
+    </label>
+    <span class="help-text" id="endHelp">End analyis after removing the specified minutes from the end of the collected data<br>
+    Enter 0.0 to use all data at end.</span><br>
+    <input type="text" id="end_time_adjustment_minutes" value="{{ end_time_adjustment_minutes }}">
+
+    <label for="cutoff_speed_MPH">
+    </br>Cutoff Speed (MPH):
+      <span class="help-icon" onclick="toggleHelp('speedHelp')">ℹ️</span>
+    </label>
+    <span class="help-text" id="speedHelp">Speeds below this threshold are ignored.</span><br>
+    <input type="number" id="cutoff_speed_MPH" value="{{ cutoff_speed_MPH }}">
+
+
+    <fieldset>
+      <legend><strong>Drift Correction Options (select one):</strong></legend>
+
+      <label>
+        <input type="radio" name="slope_option" value="1" {% if slope_option == 1 %}checked{% endif %}>
+        Do not use any drift correction
+      </label><br>
+
+      <label>
+        <input type="radio" name="slope_option" value="2" {% if slope_option == 2 %}checked{% endif %}>
+        Compute new drift value using linear regression
+      </label><br>
+
+      <label>
+        <input type="radio" name="slope_option" value="3" {% if slope_option == 3 %}checked{% endif %}>
+        Use drift value currently in the field below
+      </label>
+    </fieldset>
+    <br>
+
+
+
+
+    <label for="temperature_drift_f">
+    </br>Temperature Drift (deg F/sec):
+      <span class="help-icon" onclick="toggleHelp('driftHelp')">ℹ️</span>
+    </label>
+    <span class="help-text" id="driftHelp">Adjusts temperature values to correct for linear temperature drift over the region during the survey. <br>
+      A negative temperature drift value indicates that the ambient temperature is decreasing over time and needs to be corrected.<br/>
+      The default value of 0.0 means linear regession is used to compute the drift and applied to correct the temperatures.<br>
+      The drift value is a slope and has units of deg F per second.</span><br>
+
+    <input type="number" id="temperature_drift_f" value="{{ temperature_drift_f }}">
+
+    <label for="min_q">
+    </br>Color Scale Min Quantile:
+      <span class="help-icon" onclick="toggleHelp('minQHelp')">ℹ️</span>
+    </label>
+    <span class="help-text" id="minQHelp">Lower limit for color scaling (e.g. 5 for 5th percentile).</span><br>
+    <input type="number" id="min_q" value="{{ min_q }}">
+
+    <label for="max_q">
+    </br>Color Scale Max Quantile:
+      <span class="help-icon" onclick="toggleHelp('maxQHelp')">ℹ️</span>
+    </label>
+    <span class="help-text" id="maxQHelp">Upper limit for color scaling (e.g. 95 for 95th percentile).</span><br>
+    <input type="number" id="max_q" value="{{ max_q }}">
+
+
+    <label for="solid_color">
+    </br>Use Solid Color by Route:
+      <span class="help-icon" onclick="toggleHelp('solidColorHelp')">ℹ️</span>
+    </label>
+    <span class="help-text" id="solidColorHelp">Check to use one color per route instead of gradient.</span>
+    <input type="checkbox" id="solid_color" {% if solid_color %}checked{% endif %}>
+  
+  
+  </br> </br>
+
+  <button type="button" onclick="submitProcessing()"
+  style="background-color: blue; color: yellow; font-size: 25pt; padding: 10px 20px; border: none; border-radius: 5px;">
+  Run Processing
+</button>
+
+  </form>
+
+  <div id="statusMessage"></div> <div id="summarySection" style="display: none;">
+  <h2>Processing Summary</h2>
+  <ul>
+
+    <li>Temperature Drift: <span id="driftOut"></span> °F/sec</li>
+    <li>Campaign Duration: <span id="durationOut"></span> minutes</li>
+    <li>Maximum Temperature Correction: <span id="correctionOut"></span> °F</li>
+    <li>Maximum Corrected Temperature Detected: <span id="maxCorrectedTemperatureOut"></span> °F</li>
+    <li>Minimum Corrected Temperature Detected: <span id="minCorrectedTemperatureOut"></span> °F</li>
+    
+  </ul>
+</div>
+
+  <div id="feedback"></div>
+
+  <script>
+  function toggleHelp(id) {
+    const helpElem = document.getElementById(id);
+    helpElem.style.display = helpElem.style.display === "inline" ? "none" : "inline";
+  }
+
+  function isFormValid() {
+    const requiredFields = [
+      "start_time_adjustment_minutes",
+      "end_time_adjustment_minutes",
+      "cutoff_speed_MPH",
+      "temperature_drift_f",
+      "min_q",
+      "max_q"
+    ];
+
+    let isValid = true;
+    let feedback = document.getElementById("feedback");
+    feedback.textContent = "";
+
+    requiredFields.forEach(id => {
+      const field = document.getElementById(id);
+      if (!field.value.trim()) {
+        field.style.border = "2px solid red";
+        isValid = false;
+      } else {
+        field.style.border = "";  // Clear border if corrected
+      }
+    });
+
+    if (!isValid) {
+      feedback.textContent = "❌ Please fill in all required fields before submitting.";
+    }
+
+    return isValid;
+  }
+
+  async function submitProcessing() {
+    if (!isFormValid()) return;
+
+    const feedback = document.getElementById("feedback");
+    const statusMessage = document.getElementById("statusMessage");
+    feedback.textContent = ""; // Clear previous feedback
+    statusMessage.textContent = "Processing...";
+    statusMessage.style.color = "black"; // Reset color
+
+    const speedStr = document.getElementById("cutoff_speed_MPH").value;
+    const cutoff_speed = speedStr.trim() === "" ? null : parseFloat(speedStr);
+
+    if (cutoff_speed === null || isNaN(cutoff_speed)) {
+      alert("❌ Please enter a valid Cutoff Speed (MPH).");
+      statusMessage.textContent = "❌ Please enter a valid Cutoff Speed (MPH).";
+      statusMessage.style.color = 'red';
+      return;
+    }
+
+    const payload = {
+      process_id: document.getElementById("process_id").value,
+      start_time_adjustment_minutes: parseFloat(document.getElementById("start_time_adjustment_minutes").value),
+      end_time_adjustment_minutes: parseFloat(document.getElementById("end_time_adjustment_minutes").value),
+      cutoff_speed_MPH: cutoff_speed,
+      slope_option: parseInt(document.querySelector('input[name="slope_option"]:checked').value),
+      temperature_drift_f: parseFloat(document.getElementById("temperature_drift_f").value),
+      color_table_min_quantile: parseInt(document.getElementById("min_q").value),
+      color_table_max_quantile: parseInt(document.getElementById("max_q").value),
+      solid_color: document.getElementById("solid_color").checked
+    };
+
+    try {
+      const response = await fetch('/run_processing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json(); // Always parse JSON, whether success or error
+
+      if (response.ok) { // HTTP status is 2xx (Success)
+        console.log("Processing successful:", result);
+        statusMessage.textContent = result.message;
+        statusMessage.style.color = 'green';
+        
+        // Update summary section with results
+        document.getElementById("summarySection").style.display = "block";
+        document.getElementById("driftOut").textContent = result.temperature_drift_f;
+        document.getElementById("durationOut").textContent = result.campaign_duration_minutes;
+        document.getElementById("correctionOut").textContent = result.maximum_temperature_correction_f;
+        document.getElementById("maxCorrectedTemperatureOut").textContent = result.max_corrected_temperature_f;
+        document.getElementById("minCorrectedTemperatureOut").textContent = result.min_corrected_temperature_f;
+
+      } else { // HTTP status is not 2xx (Error)
+        console.error("Processing failed:", result);
+        let errorMessage = result.message || "An unknown error occurred.";
+        if (result.details) {
+          console.error("Error details:", result.details);
+          // For user display, you might simplify or just log details
+          // errorMessage += ` (Details: ${result.details})`; 
+        }
+        statusMessage.textContent = `Error: ${errorMessage}`;
+        statusMessage.style.color = 'red';
+        document.getElementById("summarySection").style.display = "none"; // Hide summary on error
+      }
+
+    } catch (error) {
+      console.error("Network or unexpected error:", error);
+      statusMessage.textContent = `A network or unexpected error occurred: ${error.message}`;
+      statusMessage.style.color = 'red';
+      document.getElementById("summarySection").style.display = "none"; // Hide summary on error
+    }
+  }
+
+  // Set initial radio button state based on session data
+  document.addEventListener('DOMContentLoaded', () => {
+    const slopeOptionValue = "{{ slope_option }}";
+    const radioButtons = document.querySelectorAll('input[name="slope_option"]');
+    radioButtons.forEach(radio => {
+      if (radio.value === slopeOptionValue) {
+        radio.checked = true;
+      }
+    });
+  });
+
+  </script>
+
+</body>
+</html>

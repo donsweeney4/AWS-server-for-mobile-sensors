@@ -1,134 +1,163 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <title>Livermore Urban Heat Island Mapping</title>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Essential for responsive design -->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Livermore Urban Heat Island Mapping</title>
+    <!-- Using Inter as recommended, with Roboto as a fallback for consistency -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif; /* Prefer Inter, fall back to Roboto if not available */
+            margin: 0; /* Reset default body margin */
+            padding: 0; /* Reset default body padding */
+            display: flex; /* Use flexbox for overall layout */
+            flex-direction: column; /* Stack elements vertically */
+            min-height: 100vh; /* Ensure body takes full viewport height */
+            background-color: #f0f4f8; /* Light background color for the main page */
+            color: #333; /* Default text color */
+        }
+
+        h1 {
+            text-align: center;
+            margin: 20px 0 15px; /* Top, horizontal, bottom margin */
+            color: #2c3e50;
+            font-size: 2.5em; /* Larger, more prominent title */
+        }
+
+        .logo {
+            display: block;
+            margin: 0 auto 20px; /* Center the logo and add bottom margin */
+            max-width: 150px; /* Limit logo size */
+            height: auto;
+        }
+
+        .button-container {
+            text-align: center; /* Center the buttons */
+            margin-bottom: 15px; /* Space below buttons */
+        }
+
+        button {
+            background-color: #007BFF; /* Bootstrap blue */
+            color: yellow; /* High contrast for readability */
+            font-size: 1.1em; /* Slightly larger font */
+            border: none;
+            padding: 10px 20px; /* Generous padding for easier clicking */
+            margin: 5px; /* Space between buttons */
+            cursor: pointer;
+            border-radius: 8px; /* More rounded corners */
+            transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transitions */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+            font-weight: 700; /* Bold text */
+        }
+        
+        button:disabled {
+            background-color: #a0cffc; /* Lighter blue when disabled */
+            color: #ccc; /* Greyer text for disabled state */
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        
+        button:hover:enabled {
+            background-color: #0056b3; /* Darker blue on hover */
+            transform: translateY(-2px); /* Slight lift effect */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Iframe styling for responsive and constrained content */
+        iframe {
+            flex-grow: 1; /* Allow iframe to take up available vertical space */
+            width: 100%;
+            /* Calculate height: 100vh - (approximate height of header + buttons + banner + margins) */
+            /* You might need to fine-tune the '250px' based on exact rendering */
+            height: calc(100vh - 300px); 
+            border: none;
+            overflow: auto; /* Ensures scrollbars appear if content is larger than calculated height */
+            z-index: 200;
+            display: block;
+            margin: 0 auto; /* Center horizontally if width is less than 100% */
+            border-radius: 8px; /* Match button/table style */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .banner {
+            text-align: center;
+            background-color: #34495e; /* Darker blue/grey for banner */
+            color: #ecf0f1;
+            padding: 15px 0;
+            margin-top: 20px; /* Space above the banner */
+            font-size: 1.2em;
+            font-weight: 700;
+            width: 100%;
+        }
+    </style>
+
 </head>
 
 <body>
     <h1>Tri-Valley Urban Heat Island Study</h1>
-    <img src="{{ url_for('static', filename='QuestLogo.png') }}" alt="Logo" class="logo" onclick="toggleTextbox()">
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-    <button onclick="toggleTraces(false)">Hide All</button>
-    <button onclick="toggleTraces(true)">Show All</button>
-    <button onclick="toggleTemperatureUnit()">Toggle °C/°F</button>
-    <button onclick="toggleGoogleMap()">Toggle Map Overlay</button>
-    <div id="temperature_plot"></div>
-    <div class="banner">Tri-Valley Youth Climate Action Project</div>
-    <div id="textbox" class="textbox">Tri-Valley high school students from Pleasanton, Livermore, and Tracy are working with mentors from Quest Science Center to take hyper local temperature data in our urban areas during extreme heat events. This data will be used to assist cities in determining urban areas where residents are potentially more vulnerable to adverse health effects stemming from extreme temperatures and the formation of urban heat islands.</div>
-    <div id="map-overlay" class="map-overlay">
-        <div id="map"></div>
+
+    <img src="{{ url_for('static', filename='QuestLogo.png') }}" alt="Quest Science Center Logo" class="logo">
+    
+    <div class="button-container">
+        <!-- Buttons -->
+        <button id="registrationBtn" onclick="handleRegistration()">Homepage</button>
+        <button id="processBtn" onclick="loadIframe('/renderprocessdata')" disabled>(Re)Process Sensor Data</button>
+        <button id="heatmapBtn" onclick="loadIframe('/map')" disabled>Temperature Map by Route</button> 
+        <button id="tempPlotBtn" onclick="loadIframe('/temperatureplot')" disabled>Sensor Temperatures </button>
+        <button id="metadataBtn" onclick="loadIframe('/metadata')" disabled>Metadata</button> <!-- Changed to loadIframe -->
+        <button id="downloadBtn" onclick="loadIframe('/download')" disabled>Download Campaign</button>
+        <!-- <button id="arcgisBtn" onclick="loadIframe('/arcgis')" disabled>Prepare ArcGIS data </button>-->
+
     </div>
 
+    <!-- Load HTML content into this iframe -->
+    <iframe 
+        id="contentFrame"
+        scrolling="yes"
+        onload="console.log('✅ iframe loaded:', this.src)"
+        onerror="console.error('❌ iframe failed to load:', this.src)">
+    </iframe>
+    
+    <!--
+    <div class="banner">Tri-Valley Youth Climate Action Project</div>
+    -->
+
     <script>
-        var plot_data_celsius = {{ plot_data_celsius | safe }};
-        var plot_data_fahrenheit = {{ plot_data_fahrenheit | safe }};
-        var isCelsius = true;
-
-        // Initialize the plot
-        Plotly.newPlot('temperature_plot', plot_data_celsius.data, plot_data_celsius.layout);
-
-        function toggleTraces(visibility) {
-            var update = {};
-            var vis = visibility ? true : 'legendonly';
-            for (var i = 0; i < plot_data_celsius.data.length; i++) {
-                update['visible'] = vis;
-                Plotly.restyle('temperature_plot', update, [i]);
-            }
+        /**
+         * Loads a given endpoint URL into the content iframe.
+         * @param {string} endpoint - The URL to load.
+         */
+        function loadIframe(endpoint) {
+            console.log("🔄 In index.html: loadIframe triggered with:", endpoint);
+            document.getElementById('contentFrame').src = endpoint;
         }
 
-        function toggleTemperatureUnit() {
-            isCelsius = !isCelsius;
-            var plot_data = isCelsius ? plot_data_celsius : plot_data_fahrenheit;
-            Plotly.newPlot('temperature_plot', plot_data.data, plot_data.layout);
+        /**
+         * Handles the initial registration/homepage load and enables subsequent buttons.
+         * This function should be called once on page load.
+         */
+        function handleRegistration() {
+            loadIframe('/registration'); // Use loadIframe here for consistency
+            
+            // Enable the relevant buttons after initial load
+            document.getElementById('processBtn').disabled = false;
+            document.getElementById('heatmapBtn').disabled = false;
+            document.getElementById('tempPlotBtn').disabled = false;
+            document.getElementById('metadataBtn').disabled = false; // 
+            document.getElementById('downloadBtn').disabled = false;
+            //document.getElementById('arcgisBtn').disabled = false; // Enable arcgis button
         }
 
-        function toggleGoogleMap() {
-            toggleOverlay('map-overlay');
-        }
-
-        function toggleTextbox() {
-            var textbox = document.getElementById('textbox');
-            if (textbox.style.display === 'none' || textbox.style.display === '') {
-                textbox.style.display = 'flex';
-            } else {
-                textbox.style.display = 'none';
-            }
-        }
-
-        function toggleOverlay(id) {
-            var element = document.getElementById(id);
-            if (element.style.display === "none" || element.style.display === "") {
-                element.style.display = "block";
-            } else {
-                element.style.display = "none";
-            }
-        }
-
-        async function initMap() {
-            var map = new google.maps.Map(document.getElementById('map'), {
-                center: { lat: 37.6818745, lng: -121.7680088 },
-                zoom: 13,
-                styles: [
-                    {
-                        featureType: "poi.business",
-                        elementType: "labels",
-                        stylers: [{ visibility: "off" }]
-                    }
-                ]
-            });
-
-            try {
-                const response = await fetch('/get_map_data');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const locations = await response.json();
-
-                locations.forEach(function (location) {
-                    new google.maps.Circle({
-                        strokeColor: '#FF0000',
-                        strokeOpacity: 0.8,
-                        strokeWeight: 2,
-                        fillColor: '#FF0000',
-                        fillOpacity: 0.35,
-                        map: map,
-                        center: { lat: parseFloat(location.current_latitude), lng: parseFloat(location.current_longitude) },
-                        radius: 250
-                    });
-                    new google.maps.Marker({
-                        position: { lat: parseFloat(location.current_latitude), lng: parseFloat(location.current_longitude) },
-                        map: map,
-                        label: {
-                            text: location.sensor_id.toString(),
-                            color: "black",
-                            fontSize: "16px",
-                            fontWeight: "bold"
-                        },
-                        icon: {
-                            path: google.maps.SymbolPath.CIRCLE,
-                            scale: 0 // Set scale to 0 to hide the default marker icon
-                        }
-                    });
-                });
-
-            } catch (error) {
-                console.error('Error fetching map data:', error);
-            }
-        }
-
-        // Ensure overlays are hidden initially
-        document.addEventListener('DOMContentLoaded', (event) => {
-            document.getElementById('map-overlay').style.display = 'none';
-            initMap();  // Initialize the map
+        // Execute handleRegistration once the DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("🚀 DOMContentLoaded event fired, calling handleRegistration()");
+            handleRegistration();
         });
+
     </script>
-
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAMwa7r_cM3NeLufVtd6xR4UlIsCv93h24&callback=initMap"></script>
 </body>
-
 </html>
