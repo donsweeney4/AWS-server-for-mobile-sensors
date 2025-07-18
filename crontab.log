@@ -41797,3 +41797,206 @@
 [2025-07-18 10:02:01] ✅ No new campaign_id(s) to insert.
 [2025-07-18 10:02:01] ✅ Cron sync complete.
 
+[2025-07-18 10:03:02] 🔁 Cron sync started.
+[2025-07-18 10:03:02] Found 455 file(s) in S3.
+[2025-07-18 10:03:02] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:03:02] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:03:02] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:03:02] ✅ Cron sync complete.
+
+[2025-07-18 10:04:01] 🔁 Cron sync started.
+[2025-07-18 10:04:02] Found 455 file(s) in S3.
+[2025-07-18 10:04:02] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:04:02] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:04:02] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:04:02] ✅ Cron sync complete.
+
+[2025-07-18 10:05:01] 🔁 Cron sync started.
+[2025-07-18 10:05:02] Found 455 file(s) in S3.
+[2025-07-18 10:05:02] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:05:02] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:05:02] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:05:02] ✅ Cron sync complete.
+
+[2025-07-18 10:06:01] 🔁 Cron sync started.
+[2025-07-18 10:06:02] Found 455 file(s) in S3.
+[2025-07-18 10:06:02] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:06:02] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:06:02] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:06:02] ✅ Cron sync complete.
+
+[2025-07-18 10:07:01] 🔁 Cron sync started.
+[2025-07-18 10:07:01] Found 455 file(s) in S3.
+[2025-07-18 10:07:01] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:07:02] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:07:02] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:07:02] ✅ Cron sync complete.
+
+[2025-07-18 10:08:01] 🔁 Cron sync started.
+[2025-07-18 10:08:01] Found 455 file(s) in S3.
+[2025-07-18 10:08:01] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:08:01] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:08:01] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:08:01] ✅ Cron sync complete.
+
+[2025-07-18 10:09:02] 🔁 Cron sync started.
+[2025-07-18 10:09:02] Found 455 file(s) in S3.
+[2025-07-18 10:09:02] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:09:02] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:09:02] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:09:02] ✅ Cron sync complete.
+
+[2025-07-18 10:10:02] 🔁 Cron sync started.
+[2025-07-18 10:10:03] Found 455 file(s) in S3.
+[2025-07-18 10:10:03] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:10:03] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:10:03] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:10:03] ✅ Cron sync complete.
+
+[2025-07-18 10:11:02] 🔁 Cron sync started.
+[2025-07-18 10:11:02] Found 455 file(s) in S3.
+[2025-07-18 10:11:02] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:11:02] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:11:02] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:11:02] ✅ Cron sync complete.
+
+[2025-07-18 10:12:01] 🔁 Cron sync started.
+[2025-07-18 10:12:02] Found 455 file(s) in S3.
+[2025-07-18 10:12:02] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:12:02] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:12:02] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:12:02] ✅ Cron sync complete.
+
+[2025-07-18 10:13:01] 🔁 Cron sync started.
+[2025-07-18 10:13:02] Found 455 file(s) in S3.
+[2025-07-18 10:13:02] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:13:02] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:13:02] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:13:02] ✅ Cron sync complete.
+
+[2025-07-18 10:14:01] 🔁 Cron sync started.
+[2025-07-18 10:14:02] Found 455 file(s) in S3.
+[2025-07-18 10:14:02] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:14:02] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:14:02] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:14:02] ✅ Cron sync complete.
+
+[2025-07-18 10:15:01] 🔁 Cron sync started.
+[2025-07-18 10:15:02] Found 455 file(s) in S3.
+[2025-07-18 10:15:02] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:15:02] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:15:02] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:15:02] ✅ Cron sync complete.
+
+[2025-07-18 10:16:01] 🔁 Cron sync started.
+[2025-07-18 10:16:02] Found 455 file(s) in S3.
+[2025-07-18 10:16:02] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:16:02] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:16:02] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:16:02] ✅ Cron sync complete.
+
+[2025-07-18 10:17:01] 🔁 Cron sync started.
+[2025-07-18 10:17:02] Found 455 file(s) in S3.
+[2025-07-18 10:17:02] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:17:02] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:17:02] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:17:02] ✅ Cron sync complete.
+
+[2025-07-18 10:18:01] 🔁 Cron sync started.
+[2025-07-18 10:18:01] Found 455 file(s) in S3.
+[2025-07-18 10:18:01] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:18:01] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:18:01] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:18:01] ✅ Cron sync complete.
+
+[2025-07-18 10:19:01] 🔁 Cron sync started.
+[2025-07-18 10:19:01] Found 455 file(s) in S3.
+[2025-07-18 10:19:01] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:19:01] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:19:01] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:19:01] ✅ Cron sync complete.
+
+[2025-07-18 10:20:02] 🔁 Cron sync started.
+[2025-07-18 10:20:03] Found 455 file(s) in S3.
+[2025-07-18 10:20:03] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:20:03] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:20:03] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:20:03] ✅ Cron sync complete.
+
+[2025-07-18 10:21:01] 🔁 Cron sync started.
+[2025-07-18 10:21:02] Found 455 file(s) in S3.
+[2025-07-18 10:21:02] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:21:03] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:21:03] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:21:03] ✅ Cron sync complete.
+
+[2025-07-18 10:22:01] 🔁 Cron sync started.
+[2025-07-18 10:22:01] Found 455 file(s) in S3.
+[2025-07-18 10:22:01] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:22:01] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:22:01] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:22:01] ✅ Cron sync complete.
+
+[2025-07-18 10:23:01] 🔁 Cron sync started.
+[2025-07-18 10:23:01] Found 455 file(s) in S3.
+[2025-07-18 10:23:01] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:23:01] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:23:01] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:23:01] ✅ Cron sync complete.
+
+[2025-07-18 10:24:02] 🔁 Cron sync started.
+[2025-07-18 10:24:02] Found 455 file(s) in S3.
+[2025-07-18 10:24:02] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:24:02] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:24:02] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:24:02] ✅ Cron sync complete.
+
+[2025-07-18 10:25:02] 🔁 Cron sync started.
+[2025-07-18 10:25:02] Found 455 file(s) in S3.
+[2025-07-18 10:25:02] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:25:02] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:25:02] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:25:02] ✅ Cron sync complete.
+
+[2025-07-18 10:26:02] 🔁 Cron sync started.
+[2025-07-18 10:26:02] Found 455 file(s) in S3.
+[2025-07-18 10:26:02] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:26:02] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:26:02] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:26:02] ✅ Cron sync complete.
+
+[2025-07-18 10:27:01] 🔁 Cron sync started.
+[2025-07-18 10:27:02] Found 455 file(s) in S3.
+[2025-07-18 10:27:02] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:27:02] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:27:02] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:27:02] ✅ Cron sync complete.
+
+[2025-07-18 10:28:01] 🔁 Cron sync started.
+[2025-07-18 10:28:02] Found 455 file(s) in S3.
+[2025-07-18 10:28:02] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:28:02] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:28:02] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:28:02] ✅ Cron sync complete.
+
+[2025-07-18 10:29:01] 🔁 Cron sync started.
+[2025-07-18 10:29:01] Found 455 file(s) in S3.
+[2025-07-18 10:29:01] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:29:01] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:29:01] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:29:01] ✅ Cron sync complete.
+
+[2025-07-18 10:30:01] 🔁 Cron sync started.
+[2025-07-18 10:30:01] Found 455 file(s) in S3.
+[2025-07-18 10:30:01] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:30:01] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:30:01] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:30:01] ✅ Cron sync complete.
+
+[2025-07-18 10:31:01] 🔁 Cron sync started.
+[2025-07-18 10:31:01] Found 455 file(s) in S3.
+[2025-07-18 10:31:01] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:31:01] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:31:01] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:31:01] ✅ Cron sync complete.
+
