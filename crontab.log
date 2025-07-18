@@ -41790,3 +41790,10 @@
 [2025-07-18 10:01:01] ✅ No new campaign_id(s) to insert.
 [2025-07-18 10:01:01] ✅ Cron sync complete.
 
+[2025-07-18 10:02:01] 🔁 Cron sync started.
+[2025-07-18 10:02:01] Found 455 file(s) in S3.
+[2025-07-18 10:02:01] Filtered to 73 unique campaign names from S3.
+[2025-07-18 10:02:01] Found 73 campaign_id(s) already in DB.
+[2025-07-18 10:02:01] ✅ No new campaign_id(s) to insert.
+[2025-07-18 10:02:01] ✅ Cron sync complete.
+
