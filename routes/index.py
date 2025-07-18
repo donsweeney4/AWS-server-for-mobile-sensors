@@ -1,20 +1,18 @@
-import logging
-import boto3
-import plotly.graph_objs as go
-import plotly.io as pio
+import os
+import io
+import zipfile
 from quart import Quart, Blueprint, render_template, jsonify, request, Response, session, send_file
 from quart import redirect, url_for
+import boto3
+from botocore.exceptions import ClientError
 import datetime
 import aiohttp
 import asyncio
+import logging
 from database import fetch_all_rows, execute_db_update # Assuming these are properly implemented
 from utils.process_routes import mainProcessData # Assuming this is properly implemented
-from config import Config # Assuming this is properly implemented
+from config import Config # Assuming these are properly implemented
 import re
-import zipfile
-from botocore.exceptions import ClientError
-import os
-import io
 
 
 # Configure logging
@@ -27,12 +25,92 @@ bp = Blueprint('index', __name__)
 html_template = "index.html" # Default HTML template for the root route
 
 # S3 Configuration
-S3_BUCKET = "urban-heat-island-data"
+S3_BUCKET = "urban-heat-island-data" # This is the bucket name used consistently
 S3_REGION = "us-west-2"
-s3_client = boto3.client("s3", region_name=S3_REGION)
+
+# Initialize S3 client globally
+try:
+    s3_client = boto3.client(
+        's3',
+        region_name=S3_REGION,
+        # For local testing, ensure AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set as environment variables
+        aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+        aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY')
+    )
+    logger.info(f"S3 client initialized for region: {S3_REGION}")
+except Exception as e:
+    logger.error(f"Error initializing S3 client: {e}")
+    s3_client = None # Set to None to handle cases where client initialization fails
+
+# --- Helper Functions (moved to be accessible globally or within blueprint scope) ---
+
+# Note: These helper functions need access to the Quart app's event loop (app.loop).
+# Since `app` is typically initialized in the main application file,
+# these helpers assume `app` is a globally accessible instance if not passed explicitly.
+# For a blueprint, you might pass `app` or define these helpers in the main app file.
+# For simplicity, assuming `app` will be imported or made available if this blueprint is
+# part of a larger application where `app = Quart(__name__)` is at the top level.
+# If this blueprint is the *only* part of the app, then `app` needs to be defined
+# at the top level of this file.
+
+# To make this file runnable as a standalone app for testing, let's define `app` here.
+# In a multi-file project, `app` would be defined in your main `__init__.py` or `run.py`
+# and the blueprint registered with it.
+app = Quart(__name__) # Define app here for standalone testing of this file
+
+async def list_s3_files(bucket_name):
+    """Lists all objects (files) in a given S3 bucket."""
+    if not s3_client:
+        return {"error": "S3 client not initialized."}, 500
+
+    if not bucket_name:
+        return {"error": "S3 bucket name not configured."}, 500
+
+    try:
+        response = await app.loop.run_in_executor( # Use app.loop
+            None, lambda: s3_client.list_objects_v2(Bucket=bucket_name)
+        )
+        files = []
+        for obj in response.get('Contents', []):
+            files.append(obj['Key']) # 'Key' is the file name/path in S3
+        return files, 200
+    except ClientError as e:
+        error_code = e.response.get("Error", {}).get("Code")
+        if error_code == 'NoSuchBucket':
+            return {"error": f"Bucket '{bucket_name}' not found."}, 404
+        elif error_code == 'AccessDenied':
+            return {"error": "Access denied to S3 bucket. Check credentials/permissions."}, 403
+        else:
+            return {"error": f"S3 client error: {e}"}, 500
+    except Exception as e:
+        return {"error": f"An unexpected error occurred while listing S3 files: {e}"}, 500
+
+async def download_s3_file(bucket_name, file_key):
+    """Downloads a single file from S3 and returns its content as bytes."""
+    if not s3_client:
+        raise Exception("S3 client not initialized.")
+    if not bucket_name:
+        raise Exception("S3 bucket name not configured.")
+
+    try:
+        response = await app.loop.run_in_executor( # Use app.loop
+            None, lambda: s3_client.get_object(Bucket=bucket_name, Key=file_key)
+        )
+        return await app.loop.run_in_executor(None, lambda: response['Body'].read())
+    except ClientError as e:
+        error_code = e.response.get("Error", {}).get("Code")
+        if error_code == 'NoSuchKey':
+            raise FileNotFoundError(f"File '{file_key}' not found in bucket '{bucket_name}'.")
+        elif error_code == 'AccessDenied':
+            raise PermissionError(f"Access denied to file '{file_key}'. Check permissions.")
+        else:
+            raise Exception(f"S3 download error for '{file_key}': {e}")
+    except Exception as e:
+        raise Exception(f"An unexpected error occurred while downloading '{file_key}': {e}")
+
 
 ##//####### Health check ######################################################
-# Called by lambda function once per minute to check if the server is up, 
+# Called by lambda function once per minute to check if the server is up,
 # if not it will be restarted
 
 @bp.route('/health')
@@ -116,7 +194,7 @@ async def renderprocessdata():
 
     logger.info("Rendering processdata page")
     campaign_id = session.get('campaign_id')
-    
+
     # Pass session values as keyword arguments to the template
     return await render_template("renderprocessdata.html", **session)
 
@@ -147,9 +225,9 @@ async def run_processing():
     # Note: 'campaign_id' is already from session, no need to update from payload unless it changes
     session['start_time_adjustment_minutes'] = data.get('start_time_adjustment_minutes', session.get('start_time_adjustment_minutes'))
     session['end_time_adjustment_minutes'] = data.get('end_time_adjustment_minutes', session.get('end_time_adjustment_minutes'))
-    
 
-    session['cutoff_speed_MPH'] = data.get('cutoff_speed_MPH', session.get('cutoff_speed_MPH'))   
+
+    session['cutoff_speed_MPH'] = data.get('cutoff_speed_MPH', session.get('cutoff_speed_MPH'))
     session['slope_option'] = data.get('slope_option', session.get('slope_option'))
     session['temperature_drift_f'] = data.get('temperature_drift_f', session.get('temperature_drift_f'))
     session['min_q'] = data.get('color_table_min_quantile', session.get('min_q'))
@@ -158,7 +236,7 @@ async def run_processing():
 
     try:
         root_name = data.get('process_id', campaign_id) # Use process_id if provided, else campaign_id
-        
+
         # Helper functions for parsing values with error handling
         def parse_float(field, default):
             try:
@@ -171,13 +249,13 @@ async def run_processing():
                 return int(data.get(field, default))
             except (ValueError, TypeError):
                 raise ValueError(f"'{field}' must be an integer.")
-            
+
         start_time_adjustment_minutes = parse_float('start_time_adjustment_minutes', session['start_time_adjustment_minutes'])
         end_time_adjustment_minutes = parse_float('end_time_adjustment_minutes', session['end_time_adjustment_minutes'])
-        
+
         # Corrected field name here as well
-        cutoff_speed_MPH = parse_float('cutoff_speed_MPH', session['cutoff_speed_MPH']) 
-        
+        cutoff_speed_MPH = parse_float('cutoff_speed_MPH', session['cutoff_speed_MPH'])
+
         slope_option = parse_int('slope_option', session['slope_option'])
         temperature_drift_f_input = parse_float('temperature_drift_f', session['temperature_drift_f']) # Renamed to avoid conflict with return value
         color_table_min_quantile = parse_int('color_table_min_quantile', session['min_q'])
@@ -196,8 +274,8 @@ async def run_processing():
 
 
         temperature_drift_f_output, campaign_duration_seconds, maximum_temperature_correction_f,max_corrected_temperature_f,min_corrected_temperature_f = \
-            await asyncio.to_thread(mainProcessData, 
-                                    root_name=root_name, 
+            await asyncio.to_thread(mainProcessData,
+                                    root_name=root_name,
                                     start_time_adjustment_minutes=start_time_adjustment_minutes,
                                     end_time_adjustment_minutes=end_time_adjustment_minutes,
                                     cutoff_speed_MPH=cutoff_speed_MPH,
@@ -246,10 +324,9 @@ async def map_view():
     bucket_name = S3_BUCKET # Use the global S3_BUCKET constant
     key = f"{campaign_id}_color_coded_temperature_map.html"
 
-    s3 = boto3.client('s3', region_name=S3_REGION) # Ensure region is specified
-
+    # s3 = boto3.client('s3', region_name=S3_REGION) # Use the globally initialized s3_client
     try:
-        obj = s3.get_object(Bucket=bucket_name, Key=key)
+        obj = s3_client.get_object(Bucket=bucket_name, Key=key)
         html_content = obj['Body'].read().decode('utf-8')
         logger.info(f"Fetched {key} from S3 successfully.")
         return Response(html_content, content_type='text/html')
@@ -271,10 +348,9 @@ async def temperature_plot():
     bucket_name = S3_BUCKET # Use the global S3_BUCKET constant
     key = f"{campaign_id}_fig1_corrected_temperature_map_time_window.html"
 
-    s3 = boto3.client('s3', region_name=S3_REGION) # Ensure region is specified
-
+    # s3 = boto3.client('s3', region_name=S3_REGION) # Use the globally initialized s3_client
     try:
-        obj = s3.get_object(Bucket=bucket_name, Key=key)
+        obj = s3_client.get_object(Bucket=bucket_name, Key=key)
         html_content = obj['Body'].read().decode('utf-8')
         logger.info(f"Fetched {key} from S3 successfully.")
         return Response(html_content, content_type='text/html')
@@ -315,7 +391,7 @@ async def get_campaign_locations():
                 processed_row[key] = value.isoformat()
             elif key == 'hidden':
                 # Convert integer (0/1) from DB to boolean for frontend
-                processed_row[key] = bool(value) 
+                processed_row[key] = bool(value)
             else:
                 processed_row[key] = value
         rows_serializable.append(processed_row)
@@ -339,16 +415,16 @@ async def update_campaign():
         logger.info(f"🔵 Received single campaign update: {campaign_data}")
 
         campaign_id = campaign_data.get('campaign_id')
-        
+
         # Use campaign_title instead of description to match DB
-        campaign_title = campaign_data.get('campaign_title') 
+        campaign_title = campaign_data.get('campaign_title')
         owners = campaign_data.get('owners')
-        
+
         # Use run_date_str instead of date_str to match DB
-        run_date_str = campaign_data.get('run_date') 
-        
+        run_date_str = campaign_data.get('run_date')
+
         # New field: hidden status (boolean from frontend)
-        hidden = campaign_data.get('hidden') 
+        hidden = campaign_data.get('hidden')
 
         if not campaign_id:
             return jsonify({"error": "Missing campaign_id"}), 400
@@ -374,7 +450,7 @@ async def update_campaign():
         # Parameters order must match the SQL query's SET clause order
         params = (campaign_title, owners, run_date_str, hidden_int, campaign_id)
         logger.info(f"🔵 Executing SQL: {sql} with params: {params}")
-        
+
         # Execute blocking database update in a separate thread for Quart
         success = await asyncio.to_thread(execute_db_update, sql, params)
 
@@ -405,7 +481,7 @@ async def update_hidden():
 
         if not campaign_id:
             return jsonify({"error": "Missing campaign_id"}), 400
-        
+
         # Ensure 'hidden' is explicitly provided and is a boolean
         if hidden is None or not isinstance(hidden, bool):
             return jsonify({"error": "Missing or invalid 'hidden' status. Must be a boolean."}), 400
@@ -432,7 +508,7 @@ async def update_hidden():
 
     except Exception as e:
         logger.exception("❌ Exception while updating hidden status in /update_hidden route")
-        return jsonify({"error": "An error occurred", "details": str(e)}), 500   
+        return jsonify({"error": "An error occurred", "details": str(e)}), 500
 
 ##//#############################################################################
 @bp.route('/registration')
@@ -483,7 +559,7 @@ async def get_metadata(): # Changed to async for consistency with Quart and pote
              result[key] = bool(value) # Convert to boolean
         else:
             result[key] = value
-    
+
     logger.info(f"Fetched metadata for campaign_id: {campaign_id}")
     return jsonify(result)
 
@@ -542,7 +618,7 @@ async def submit_registration():
     form_data = await request.form # Correct for Quart
     logger.info(f"Form data received: {form_data}")
     campaign_id = form_data.get('campaign_id')
-    
+
     if campaign_id:
         session['campaign_id'] = campaign_id
         logger.info(f"Stored campaign_id in session: {campaign_id}")
@@ -566,7 +642,6 @@ async def submit_metadata():
 
 ##//#############################################################################
 @bp.route('/download-and-zip')
-
 async def download_and_zip_files():
     """
     Endpoint to download, zip, and serve files from S3 based on a common root name.
@@ -574,17 +649,18 @@ async def download_and_zip_files():
     root_name = session.get('campaign_id')
 
     if not S3_BUCKET:
-        return jsonify({"error": "S3_BUCKET_NAME environment variable not set."}), 500
+        return jsonify({"error": "S3_BUCKET environment variable not set."}), 500
     if not s3_client:
         return jsonify({"error": "S3 client not initialized. Check AWS configuration."}), 500
     if not root_name:
-        return jsonify({"error": "Missing 'root_name' query parameter."}), 400
+        # Updated error message to reflect root_name comes from session
+        return jsonify({"error": "Campaign ID missing from session. Cannot determine files to zip."}), 400
 
-    bp.logger.info(f"Received request to zip files with root_name: {root_name}")
+    logger.info(f"Received request to zip files with root_name (campaign_id): {root_name}")
 
 
     # List all files in the bucket
-    all_files, status_code = await list_s3_files(S3_BUCKET)
+    all_files, status_code = await list_s3_files(S3_BUCKET) # Use S3_BUCKET
     if status_code != 200:
         return jsonify(all_files), status_code # Return error from list_s3_files
 
@@ -592,93 +668,68 @@ async def download_and_zip_files():
     files_to_zip = [f for f in all_files if f.startswith(root_name)]
 
     if not files_to_zip:
-        return jsonify({"message": f"No files found starting with '{root_name}' in bucket '{S3_BUCKET_NAME}'."}), 404
+        return jsonify({"message": f"No files found starting with '{root_name}' in bucket '{S3_BUCKET}'."}), 404 # Use S3_BUCKET
 
-    bp.logger.info(f"Found {len(files_to_zip)} files to zip: {files_to_zip}")
+    logger.info(f"Found {len(files_to_zip)} files to zip: {files_to_zip}")
 
     # Create a in-memory zip file
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
         for file_key in files_to_zip:
             try:
-                bp.logger.info(f"Downloading file: {file_key}")
-                file_content = await download_s3_file(S3_BUCKET, file_key)
+                logger.info(f"Downloading file: {file_key}")
+                file_content = await download_s3_file(S3_BUCKET, file_key) # Use S3_BUCKET
                 # Add file to zip archive. Use os.path.basename to avoid creating
                 # nested directories in the zip if file_key contains paths.
                 zf.writestr(os.path.basename(file_key), file_content)
-                bp.logger.info(f"Added {file_key} to zip.")
+                logger.info(f"Added {file_key} to zip.")
             except FileNotFoundError as e:
-                bp.logger.warning(f"Skipping file '{file_key}': {e}")
+                logger.warning(f"Skipping file '{file_key}': {e}")
             except PermissionError as e:
-                bp.logger.error(f"Permission error for file '{file_key}': {e}")
+                logger.error(f"Permission error for file '{file_key}': {e}")
                 return jsonify({"error": f"Permission denied for one or more files. {e}"}), 403
             except Exception as e:
-                bp.logger.error(f"Error processing file '{file_key}': {e}")
+                logger.error(f"Error processing file '{file_key}': {e}")
                 return jsonify({"error": f"Failed to process file '{file_key}': {e}"}), 500
 
     zip_buffer.seek(0) # Rewind the buffer to the beginning
 
     #  Make the zip file downloadable
     zip_filename = f"{root_name}_files.zip"
-    bp.logger.info(f"Sending zip file: {zip_filename}")
+    logger.info(f"Sending zip file: {zip_filename}")
     return await send_file(
         zip_buffer,
         mimetype='application/zip',
         as_attachment=True,
         download_name=zip_filename
     )
-##//#############################################################################
-# Helper function to list all files in an S3 bucket
-async def list_s3_files(bucket_name):
-    """Lists all objects (files) in a given S3 bucket."""
-    if not s3_client:
-        return {"error": "S3 client not initialized."}, 500
 
-    if not bucket_name:
-        return {"error": "S3 bucket name not configured."}, 500
+# Register the blueprint with the main app if this file is intended to be run directly
+# In a larger project, this would typically be done in your main __init__.py or app.py
+app.register_blueprint(bp)
 
-    try:
-        response = await bp.loop.run_in_executor(
-            None, lambda: s3_client.list_objects_v2(Bucket=bucket_name)
-        )
-        files = []
-        for obj in response.get('Contents', []):
-            files.append(obj['Key']) # 'Key' is the file name/path in S3
-        return files, 200
-    except ClientError as e:
-        error_code = e.response.get("Error", {}).get("Code")
-        if error_code == 'NoSuchBucket':
-            return {"error": f"Bucket '{bucket_name}' not found."}, 404
-        elif error_code == 'AccessDenied':
-            return {"error": "Access denied to S3 bucket. Check credentials/permissions."}, 403
-        else:
-            return {"error": f"S3 client error: {e}"}, 500
-    except Exception as e:
-        return {"error": f"An unexpected error occurred while listing S3 files: {e}"}, 500
+if __name__ == '__main__':
+    # Ensure S3_BUCKET is set before running if not hardcoded
+    # In this specific code, S3_BUCKET is hardcoded, but if it were from env, this check is vital.
+    # For local testing, you might still need AWS credentials.
+    if not os.environ.get('AWS_ACCESS_KEY_ID') or not os.environ.get('AWS_SECRET_ACCESS_KEY'):
+        print("Warning: AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY environment variables are not set.")
+        print("Please set them for S3 operations to work correctly, e.g.:")
+        print("export AWS_ACCESS_KEY_ID='YOUR_ACCESS_KEY_ID'")
+        print("export AWS_SECRET_ACCESS_KEY='YOUR_SECRET_ACCESS_KEY'")
+        exit(1) # Exit if credentials are not set for S3 client initialization to succeed
 
-##//#############################################################################
-# Helper function to download a single file from S3
-async def download_s3_file(bucket_name, file_key):
-    """Downloads a single file from S3 and returns its content as bytes."""
-    if not s3_client:
-        raise Exception("S3 client not initialized.")
-    if not bucket_name:
-        raise Exception("S3 bucket name not configured.")
+    # Quart requires a secret key for session management
+    app.secret_key = os.environ.get('QUART_SECRET_KEY', 'a_super_secret_key_for_dev')
+    if app.secret_key == 'a_super_secret_key_for_dev':
+        logger.warning("QUART_SECRET_KEY not set in environment. Using a default key. Set a strong, unique key in production!")
 
-    try:
-        response = await bp.loop.run_in_executor(
-            None, lambda: s3_client.get_object(Bucket=bucket_name, Key=file_key)
-        )
-        return await bp.loop.run_in_executor(None, lambda: response['Body'].read())
-    except ClientError as e:
-        error_code = e.response.get("Error", {}).get("Code")
-        if error_code == 'NoSuchKey':
-            raise FileNotFoundError(f"File '{file_key}' not found in bucket '{bucket_name}'.")
-        elif error_code == 'AccessDenied':
-            raise PermissionError(f"Access denied to file '{file_key}'. Check permissions.")
-        else:
-            raise Exception(f"S3 download error for '{file_key}': {e}")
-    except Exception as e:
-        raise Exception(f"An unexpected error occurred while downloading '{file_key}': {e}")
+    app.run(debug=True, port=5000) # Run in debug mode for development
 
-
+# This file is part of a Quart application that handles various routes for
+# processing and serving data related to temperature campaigns, including
+# uploading CSV files, processing temperature data, and serving HTML pages  
+# for maps and plots.
+# It also includes functionality for zipping and downloading files from an S3 bucket.
+# The application uses AWS S3 for file storage and retrieval, and it provides
+# endpoints for health checks, metadata management, and campaign registration.  
