@@ -48,32 +48,33 @@
 
 <h1>Edit Campaign Metadata</h1>
 
-<form action="/update_metadata" method="POST" id="metadataForm">
-    <label for="campaign_id">Campaign ID (read-only):</label>
-    <input type="text" id="campaign_id" name="campaign_id" disabled>
+<form method="POST" action="/update_metadata">
+  <label for="campaign_title">Title</label>
+  <input
+    id="campaign_title"
+    name="campaign_title"
+    type="text"
+    value="{{ campaign_title or '' }}"
+  />
 
-    <label for="run_date">Run Date (read-only):</label>
-    <input type="text" id="run_date" name="run_date" disabled>
+  <label for="campaign_location">Location</label>
+  <input
+    id="campaign_location"
+    name="campaign_location"
+    type="text"
+    value="{{ campaign_location or '' }}"
+  />
 
-    <label for="campaign_title">Campaign Title:</label>
-    <input type="text" id="campaign_title" name="campaign_title" class="editable">
+  <label for="short_description">Short description</label>
+  <textarea
+    id="short_description"
+    name="short_description"
+  >{{ short_description or '' }}</textarea>
 
-    <label for="campaign_location">Campaign Location:</label>
-    <input type="text" id="campaign_location" name="campaign_location" class="editable">
-
-    <label for="short_description">Short Description:</label>
-    <textarea id="short_description" name="short_description" rows="3" class="editable"></textarea>
-
-    <label for="owners">Owners:</label>
-    <input type="text" id="owners" name="owners" class="editable">
-
-    <label for="notes">Notes:</label>
-    <textarea id="notes" name="notes" rows="4" class="editable"></textarea>
-
-
-
-    <button type="submit">Update Metadata</button>
+  <!-- etc... -->
+  <button type="submit">Save</button>
 </form>
+
 
 <script>
     async function loadMetadata() {

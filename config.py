@@ -3,7 +3,8 @@ import os
 class Config:
     """
     Configuration class for the application.
-    It fetches configuration settings from environment variables.  The environment variables can be set in the hypercorn service file.
+    It fetches configuration settings from environment variables.  The environment variables can be set in the 
+    hypercorn service file.
     The database is the same as the one used in the stationary network server. 
     
     The table name here is campaign_locations 
