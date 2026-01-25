@@ -70,6 +70,7 @@ def save_to_s3(bucket_name, key, content, is_binary=False):
 
 
 def mainProcessData(root_name,
+                    bucket_name,
                     start_time_adjustment_minutes=0.0,
                     end_time_adjustment_minutes=0.0,
                     cutoff_speed_MPH=1.0,
@@ -81,7 +82,7 @@ def mainProcessData(root_name,
 
     logger.info(f"Starting mainProcessData with root_name={root_name}")
     #breakpoint()
-    bucket_name = 'urban-heat-island-data'
+
     csv_keys = get_s3_objects(bucket_name, root_name)
 
     if not csv_keys:
@@ -143,7 +144,7 @@ def mainProcessData(root_name,
 
         logger.info(f"df_step2 shape: {df_step2.shape} (rows, columns)")
 
-        if cutoff_speed_MPH < 1.e-3:  # If cutoff speed is very small, skip filtering
+        if cutoff_speed_MPH < 1.e-3:  # If cutoff speed is very small (including 0) skip filtering
             logger.warning(f"⚠️ Cutoff speed is very small ({cutoff_speed_MPH} MPH). Skipping speed filtering.")
             df_step3 = df_step2.copy()
         else:
@@ -288,7 +289,7 @@ def mainProcessData(root_name,
             else:
                 fill_color = colormap(row['corrected_temperature_f'])
 
-            tooltip = (
+            popup_html = (
                 f"File: {key}<br>"
                 f"Local Time: {row['LocalTime']}<br>"
                 f"Corrected Temp: {row['corrected_temperature_f']:.2f} °F<br>"
@@ -296,8 +297,12 @@ def mainProcessData(root_name,
                 f"Humidity: {row['Humidity (%)']} %<br>"
                 f"Speed: {row['Speed (MPH)']} MPH<br>"
                 f"Lat: {row['Latitude']}<br>"
-                f"Lon: {row['Longitude']}"
+                f"Lon: {row['Longitude']}<br>"
+                f"<a href=\"https://www.google.com/maps?q=&layer=c&cbll={row['Latitude']},{row['Longitude']}\" target=\"_blank\">Open in Street View</a>"
             )
+
+            popup = folium.Popup(popup_html, max_width=300)
+
 
             folium.CircleMarker(
                 location=[row['Latitude'], row['Longitude']],
@@ -306,7 +311,7 @@ def mainProcessData(root_name,
                 fill=True,
                 fill_color=fill_color,
                 fill_opacity=0.5,
-                tooltip=tooltip
+                popup=popup,
             ).add_to(group)
 
         group.add_to(m)
@@ -324,7 +329,7 @@ def mainProcessData(root_name,
     #html_filename = f"{root_name}_{'color_coded_route_map' if solid_color else 'color_coded_temperature_map'}.html"
     html_filename = f"{root_name}_{'color_coded_temperature_map'}.html"
 
-    save_to_s3(bucket_name, html_filename, html_map)
+    save_to_s3(bucket_name, html_filename, html_map) # Primary color coded html temperature map 
 
     ######################################################################
     # Figure 1 — temperature with time filtering and corrected temperature in deg F
@@ -400,22 +405,25 @@ def mainProcessData(root_name,
     )
     # ────────────────────────────────────────────────────────────────────────────────
 
-    html_buf2 = io.StringIO()
-    pio.write_html(fig2, file=html_buf2, auto_open=False)
-    save_to_s3(bucket_name, f"{root_name}_fig_2_corrected_temperature_map_entire_time.html", html_buf2.getvalue())
-    html_buf2.close()
+                        # html_buf2 = io.StringIO()
+                        # pio.write_html(fig2, file=html_buf2, auto_open=False)
+                        # save_to_s3(bucket_name, f"{root_name}_fig_2_corrected_temperature_map_entire_time.html", html_buf2.getvalue())
+                        # html_buf2.close()
 
     ##########################################################################
-    # Save CSVs
+# Save CSVs
 
     #logger.info("Saving processed data to S3...")
 
     combined_csv = df_step5.to_csv(index=False)
-    save_to_s3(bucket_name, f"{root_name}_combined_data", combined_csv)
+#SAVE df_step5
+    save_to_s3(bucket_name, f"{root_name}_combined_data_with_corrections.csv", combined_csv)
 
-    reduced_df = df_step5[['Latitude', 'Longitude', 'Altitude (m)', 'corrected_temperature_f', 'Humidity (%)', 'SourceFile']]
-    reduced_csv = reduced_df.to_csv(index=False)
-    save_to_s3(bucket_name, f"{root_name}_combined_data_reduced_columns.csv", reduced_csv)
+                        #    reduced_df = df_step5[['Latitude', 'Longitude', 'Altitude (m)', 'corrected_temperature_f', 'Humidity (%)', 'SourceFile']]
+                        #    reduced_csv = reduced_df.to_csv(index=False)
+                        # SAVE df_step5 with fewer columns
+                        #    save_to_s3(bucket_name, f"{root_name}_combined_data_reduced_columns_with_corrections.csv", reduced_csv)
+    ##########################################################################    
 
     campaign_duration_seconds = (df_step5['Timestamp'].max() - df_step5['Timestamp'].min()).total_seconds()
     logger.info(f"Campaign duration in seconds: {campaign_duration_seconds} using method 1")
@@ -439,6 +447,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('root_name', help='Required root name')
+    parser.add_argument('bucket_name',  help='Required S3 bucket name')
     parser.add_argument('--start_time_adjustment_minutes', type=float, default=1.0)
     parser.add_argument('--end_time_adjustment_minutes', type=float, default=1.0)
     parser.add_argument('--cutoff_speed_MPH', type=float, default=1.0)
@@ -452,8 +461,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+# This is the main data processing function
     mainProcessData(
         root_name=args.root_name,
+        bucket_name=args.bucket_name,
         start_time_adjustment_minutes=args.start_time_adjustment_minutes,
         end_time_adjustment_minutes=args.end_time_adjustment_minutes,
         cutoff_speed_MPH=args.cutoff_speed_MPH,

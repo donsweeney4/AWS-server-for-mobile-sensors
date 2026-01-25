@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="{{ url_for('static', filename='js/error-logger.js') }}"></script>
   <meta charset="UTF-8">
   <title>Process Sensor Data</title>
   <style>
@@ -42,9 +43,9 @@
 </head>
 <body>
 
-  <h1>(Re)Process Sensor Data<span class="help-icon" onclick="toggleHelp('heading')">ℹ️</span></h1>
+  <h1> (Re) Process Sensor Data<span class="help-icon" onclick="toggleHelp('heading')">ℹ️</span></h1>
 
-<span class="help-text" id="heading">You don't necessarily need to recompute values.  The prior result is available in other tabs.</span><br>
+<span class="help-text" id="heading">You don't necessarily need to recompute values.  The prior result is available in other tabs.</span><br>
   <h2 id="currentSelectionDisplay">
     Current campaign id:
     <span style="color: red;">{{ campaign_id | default('NONE') }}</span>
@@ -55,23 +56,23 @@
     <input type="hidden" id="process_id" value="{{ campaign_id | default('UNKNOWN') }}">
 
     <label for="start_time_adjustment_minutes">
-      Prune (ie, remove) starting data in minutes:
+      Prune (ie, remove) starting data in minutes for each route:
       <span class="help-icon" onclick="toggleHelp('startHelp')">ℹ️</span>
     </label>
-    <span class="help-text" id="startHelp">Begin analysis after removing the specified minutes from the beginning of the collected data<br>
+    <span class="help-text" id="startHelp">Begin analysis after removing the specified minutes from the beginning for each route. <br>
     Enter 0.0 to use all data at beginning.</span><br>
     <input type="text" id="start_time_adjustment_minutes" value="{{ start_time_adjustment_minutes }}">
 
     <label for="end_time_adjustment_minutes">
-    </br>Prune (ie, remove) ending data in minutes:
+    <br>Prune (ie, remove) ending data in minutes for each route:
       <span class="help-icon" onclick="toggleHelp('endHelp')">ℹ️</span>
     </label>
-    <span class="help-text" id="endHelp">End analyis after removing the specified minutes from the end of the collected data<br>
+    <span class="help-text" id="endHelp">End analyis after removing the specified minutes from the end for each route<br>
     Enter 0.0 to use all data at end.</span><br>
     <input type="text" id="end_time_adjustment_minutes" value="{{ end_time_adjustment_minutes }}">
 
     <label for="cutoff_speed_MPH">
-    </br>Cutoff Speed (MPH):
+    <br>Cutoff Speed (MPH):
       <span class="help-icon" onclick="toggleHelp('speedHelp')">ℹ️</span>
     </label>
     <span class="help-text" id="speedHelp">Speeds below this threshold are ignored.</span><br>
@@ -88,7 +89,7 @@
 
       <label>
         <input type="radio" name="slope_option" value="2" {% if slope_option == 2 %}checked{% endif %}>
-        Compute new drift value using linear regression
+        Compute drift value using linear regression
       </label><br>
 
       <label>
@@ -101,26 +102,26 @@
 
 
 
-    <label for="temperature_drift_f">
-    </br>Temperature Drift (deg F/sec):
-      <span class="help-icon" onclick="toggleHelp('driftHelp')">ℹ️</span>
-    </label>
-    <span class="help-text" id="driftHelp">Adjusts temperature values to correct for linear temperature drift over the region during the survey. <br>
-      A negative temperature drift value indicates that the ambient temperature is decreasing over time and needs to be corrected.<br/>
-      The default value of 0.0 means linear regession is used to compute the drift and applied to correct the temperatures.<br>
-      The drift value is a slope and has units of deg F per second.</span><br>
+            <label for="temperature_drift_f">
+              <br>Temperature Drift (deg F/sec):
+                <span class="help-icon" onclick="toggleHelp('driftHelp')">ℹ️</span>
+              </label>
+              <span class="help-text" id="driftHelp">Adjusts temperature values to correct for linear temperature drift over the region during the survey. <br>
+                A negative temperature drift value indicates that the ambient temperature is decreasing over time and needs to be corrected.<br/>
+                The default value of 0.0 means linear regession is used to compute the drift and applied to correct the temperatures.<br>
+                The drift value is a slope and has units of deg F per second.</span><br>
 
-    <input type="number" id="temperature_drift_f" value="{{ temperature_drift_f }}">
+              <input type="number" id="temperature_drift_f" value="{{ temperature_drift_f }}">  
 
     <label for="min_q">
-    </br>Color Scale Min Quantile:
+    <br>Color Scale Min Quantile:
       <span class="help-icon" onclick="toggleHelp('minQHelp')">ℹ️</span>
     </label>
     <span class="help-text" id="minQHelp">Lower limit for color scaling (e.g. 5 for 5th percentile).</span><br>
     <input type="number" id="min_q" value="{{ min_q }}">
 
     <label for="max_q">
-    </br>Color Scale Max Quantile:
+    <br>Color Scale Max Quantile:
       <span class="help-icon" onclick="toggleHelp('maxQHelp')">ℹ️</span>
     </label>
     <span class="help-text" id="maxQHelp">Upper limit for color scaling (e.g. 95 for 95th percentile).</span><br>
@@ -128,14 +129,14 @@
 
 
     <label for="solid_color">
-    </br>Use Solid Color by Route:
+    <br>Use Solid Color by Route:
       <span class="help-icon" onclick="toggleHelp('solidColorHelp')">ℹ️</span>
     </label>
     <span class="help-text" id="solidColorHelp">Check to use one color per route instead of gradient.</span>
     <input type="checkbox" id="solid_color" {% if solid_color %}checked{% endif %}>
-  
-  
-  </br> </br>
+ 
+ 
+<br> <br>
 
   <button type="button" onclick="submitProcessing()"
   style="background-color: blue; color: yellow; font-size: 25pt; padding: 10px 20px; border: none; border-radius: 5px;">
@@ -143,6 +144,8 @@
 </button>
 
   </form>
+
+
 
   <div id="statusMessage"></div> <div id="summarySection" style="display: none;">
   <h2>Processing Summary</h2>
@@ -155,9 +158,7 @@
     <li>Minimum Corrected Temperature Detected: <span id="minCorrectedTemperatureOut"></span> °F</li>
     
   </ul>
-</div>
-
-  <div id="feedback"></div>
+  </div><div id="feedback"></div>
 
   <script>
   function toggleHelp(id) {
@@ -238,7 +239,8 @@
 
       if (response.ok) { // HTTP status is 2xx (Success)
         console.log("Processing successful:", result);
-        statusMessage.textContent = result.message;
+        statusMessage.textContent = "Processing complete and results updated.";
+      
         statusMessage.style.color = 'green';
         
         // Update summary section with results
@@ -248,6 +250,29 @@
         document.getElementById("correctionOut").textContent = result.maximum_temperature_correction_f;
         document.getElementById("maxCorrectedTemperatureOut").textContent = result.max_corrected_temperature_f;
         document.getElementById("minCorrectedTemperatureOut").textContent = result.min_corrected_temperature_f;
+
+        // *** NEW: Log the processing event ***
+        let logMessage = "Data processing run with the following parameters:\n";
+        for (const key in payload) {
+            logMessage += `${key}: ${payload[key]}\n`;
+        }
+        
+        try {
+            const logResponse = await fetch('/log_activity', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: logMessage })
+            });
+            if (logResponse.ok) {
+                console.log("Activity logged successfully.");
+            } else {
+                const logError = await logResponse.json();
+                console.error("Failed to log activity:", logError.error);
+            }
+        } catch (logError) {
+            console.error("Network error while logging activity:", logError);
+        }
+        // *** END NEW ***
 
       } else { // HTTP status is not 2xx (Error)
         console.error("Processing failed:", result);

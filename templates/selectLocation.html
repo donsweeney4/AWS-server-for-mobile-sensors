@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="{{ url_for('static', filename='js/error-logger.js') }}"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Location</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+        }
+    </style>
+</head>
+<body class="p-5 flex flex-col items-center">
+
+    <div class="w-full max-w-lg p-8 bg-white rounded-lg shadow-xl">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Select the City or Location</h1>
+        
+        <form action="/store_selected_location" method="POST" id="locationForm">
+            <div class="mb-6">
+                <label for="location_select" class="block text-lg font-medium text-gray-700 mb-2"></label>
+                <select id="location_select" name="selected_location" class="block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-lg" disabled>
+                    <option value="">Loading locations...</option>
+                </select>
+            </div>
+            
+            <button type="submit" id="submitBtn" disabled 
+                    class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-md text-lg
+                           hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                           disabled:bg-gray-400 disabled:cursor-not-allowed">
+                Next
+            </button>
+        </form>
+    </div>
+
+    <script>
+        /**
+         * Fetches the list of available locations from the backend
+         * and populates the dropdown.
+         */
+        async function loadLocations() {
+            const select = document.getElementById('location_select');
+            const submitBtn = document.getElementById('submitBtn');
+
+            try {
+                // Fetch from the new backend route
+                const response = await fetch('/get_locations'); 
+                
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || `HTTP error! status: ${response.status}`);
+                }
+
+                const locations = await response.json(); // Expects an array like [{"id": "loc1", "name": "Livermore"}, ...]
+
+                // Clear the 'Loading...' placeholder
+                select.innerHTML = ''; 
+
+                if (locations.length === 0) {
+                    select.innerHTML = '<option value="">No locations available</option>';
+                    return; // Keep submit button disabled
+                }
+
+                // Add a default prompt
+                const defaultOption = document.createElement('option');
+                defaultOption.value = "";
+                defaultOption.textContent = "Please select a location";
+                defaultOption.disabled = true;
+                defaultOption.selected = true;
+                select.appendChild(defaultOption);
+
+                // Populate with fetched locations
+                locations.forEach(location => {
+                    const option = document.createElement('option');
+                    option.value = location.value; // Assumes location object has 'value'
+                    option.textContent = location.label; // Assumes location object has 'label'
+                    select.appendChild(option);
+                });
+                
+                // Enable the dropdown now that it's populated
+                select.disabled = false;
+
+            } catch (err) {
+                console.error('Error loading locations:', err);
+                select.innerHTML = `<option value="">${err.message || 'Error loading locations'}</option>`;
+            }
+        }
+
+        // Add event listener to enable submit button only when a valid location is selected
+        document.getElementById('location_select').addEventListener('change', function() {
+            const submitBtn = document.getElementById('submitBtn');
+            if (this.value) {
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.disabled = true;
+            }
+        });
+
+        // Load locations when the page (iframe content) loads
+        window.onload = loadLocations;
+    </script>
+
+</body>
+</html>

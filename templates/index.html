@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <script src="{{ url_for('static', filename='js/error-logger.js') }}"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Essential for responsive design -->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
@@ -98,13 +99,14 @@
 </head>
 
 <body>
-    <h1>Tri-Valley Urban Heat Island Study</h1>
+    <h1> Urban Heat Island Study</h1>
 
     <img src="{{ url_for('static', filename='QuestLogo.png') }}" alt="Quest Science Center Logo" class="logo">
     
     <div class="button-container">
         <!-- Buttons -->
-        <button id="registrationBtn" onclick="handleRegistration()">Homepage</button>
+        <button id="locationBtn" onclick="handleLocation()">Location</button>
+        <button id="campaignBtn" onclick="loadIframe('/campaign')" disabled>Select Campaign</button>
         <button id="processBtn" onclick="loadIframe('/renderprocessdata')" disabled>(Re)Process Sensor Data</button>
         <button id="heatmapBtn" onclick="loadIframe('/map')" disabled>Temperature Map by Route</button> 
         <button id="tempPlotBtn" onclick="loadIframe('/temperatureplot')" disabled>Sensor Temperatures </button>
@@ -137,13 +139,14 @@
         }
 
         /**
-         * Handles the initial registration/homepage load and enables subsequent buttons.
+         * 
          * This function should be called once on page load.
          */
-        function handleRegistration() {
-            loadIframe('/registration'); // Use loadIframe here for consistency
+        function handleLocation() {
+            loadIframe('/location'); // Use loadIframe here for consistency
             
             // Enable the relevant buttons after initial load
+            document.getElementById('campaignBtn').disabled = false;
             document.getElementById('processBtn').disabled = false;
             document.getElementById('heatmapBtn').disabled = false;
             document.getElementById('tempPlotBtn').disabled = false;
@@ -152,10 +155,10 @@
             //document.getElementById('arcgisBtn').disabled = false; // Enable arcgis button
         }
 
-        // Execute handleRegistration once the DOM is fully loaded
+        // Execute handleLocation once the DOM is fully loaded
         document.addEventListener('DOMContentLoaded', function() {
-            console.log("🚀 DOMContentLoaded event fired, calling handleRegistration()");
-            handleRegistration();
+            console.log("🚀 DOMContentLoaded event fired, calling  handleLocation()");
+            handleLocation();
         });
 
     </script>
