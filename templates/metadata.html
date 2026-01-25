@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="{{ url_for('static', filename='js/error-logger.js') }}"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Campaign Metadata</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top for longer forms */
+            min-height: 100vh; /* Full viewport height */
+            padding: 20px; /* Add some padding around the form */
+        }
+        /* Custom styles to mimic original, but with Tailwind classes where possible */
+        .form-container {
+            width: 80%; /* Set width to 80% of its parent (body in this case) */
+            max-width: 900px; /* Optional: Set a maximum width to prevent it from becoming too wide on very large screens */
+            margin-left: auto; /* Center the form horizontally */
+            margin-right: auto; /* Center the form horizontally */
+            padding: 24px; /* p-6 */
+            border: 1px solid #e2e8f0; /* border-gray-200 */
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
+            background-color: #ffffff; /* bg-white */
+        }
+        .form-label {
+            display: block;
+            margin-top: 16px; /* mt-4 */
+            font-weight: 600; /* font-semibold */
+            color: #4a5568; /* text-gray-700 */
+            font-size: 0.875rem; /* text-sm */
+            margin-bottom: 8px; /* mb-2 */
+        }
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 12px; /* py-3 px-4 */
+            margin-top: 4px;
+            box-sizing: border-box;
+            border: 1px solid #cbd5e0; /* border-gray-300 */
+            border-radius: 0.5rem; /* rounded-lg */
+            background-color: #ffffff; /* bg-white */
+            color: #2d3748; /* text-gray-800 */
+            line-height: 1.25; /* leading-tight */
+            transition: all 0.2s ease-in-out; /* transition duration-200 ease-in-out */
+        }
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #4299e1; /* blue-500 */
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5); /* ring-2 ring-blue-500 */
+        }
+        .form-input[disabled],
+        .form-textarea[disabled] {
+            background-color: #e2e8f0; /* bg-gray-200 */
+            color: #718096; /* text-gray-600 */
+            cursor: not-allowed;
+        }
+        .form-input.editable,
+        .form-textarea.editable {
+            background-color: #fffbeb; /* soft yellow, bg-yellow-50 */
+        }
+        .form-button {
+            margin-top: 24px; /* mt-6 */
+            padding: 12px 24px; /* py-3 px-6 */
+            font-size: 1rem; /* text-base */
+            font-weight: 700; /* font-bold */
+            background-color: #3b82f6; /* bg-blue-600 */
+            color: #ffffff; /* text-white */
+            border-radius: 0.5rem; /* rounded-lg */
+            transition: all 0.3s ease-in-out; /* transition duration-300 ease-in-out */
+            transform: scale(1); /* Initial scale for hover effect */
+        }
+        .form-button:hover {
+            background-color: #2563eb; /* hover:bg-blue-700 */
+            transform: scale(1.02); /* hover:scale-105 */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+        }
+        .form-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); /* focus:ring-2 focus:ring-blue-500 */
+        }
+        .response-message {
+            margin-top: 24px; /* mt-6 */
+            padding: 16px; /* p-4 */
+            border-radius: 0.5rem; /* rounded-lg */
+            text-align: center;
+            font-weight: 500; /* font-medium */
+        }
+        .response-success {
+            background-color: #d1fae5; /* bg-green-100 */
+            color: #065f46; /* text-green-800 */
+        }
+        .response-error {
+            background-color: #fee2e2; /* bg-red-100 */
+            color: #991b1b; /* text-red-800 */
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Edit Campaign Metadata</h1>
+
+    <form id="metadataForm" method="POST" action="/update_metadata">
+
+        <label for="campaign_id" class="form-label">Campaign ID (read only)</label>
+        <input
+            id="campaign_id"
+            name="campaign_id"
+            type="text"
+            value="{{ campaign_id or '' }}"
+            class="form-input"
+            disabled
+        />
+
+        <label for="run_date" class="form-label">Run Date (read only)</label>
+        <input
+            id="run_date"
+            name="run_date"
+            type="text"
+            value="{{ run_date or '' }}"
+            class="form-input"
+            disabled
+        />
+
+        <label for="campaign_title" class="form-label">Title</label>
+        <input
+            id="campaign_title"
+            name="campaign_title"
+            type="text"
+            value="{{ campaign_title or '' }}"
+            class="form-input editable"
+        />
+
+        <label for="campaign_location" class="form-label">Location (read only)</label>
+        <input
+            id="campaign_location"
+            name="campaign_location"
+            type="text"
+            value="{{ campaign_location or '' }}"
+            class="form-input"
+            disabled
+        />
+
+        <label for="short_description" class="form-label">Short description</label>
+        <textarea
+            id="short_description"
+            name="short_description"
+            class="form-textarea editable"
+        >{{ short_description or '' }}</textarea>
+
+        <label for="owners" class="form-label">Owners</label>
+        <textarea
+            id="owners"
+            name="owners"
+            class="form-textarea editable"
+        >{{ owners or '' }}</textarea>
+
+        <label for="notes" class="form-label">Notes</label>
+        <textarea
+            id="notes"
+            name="notes"
+            class="form-textarea editable"
+        >{{ notes or '' }}</textarea>
+
+        <button type="submit" class="form-button w-full">Save</button>
+    </form>
+
+    <div id="responseMessage" class="response-message hidden">
+        </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Define the base URL for your backend API
+        // Make sure this matches where your Quart app is running
+        const BASE_URL = ''; // Changed to relative path since it's on the same domain/port
+
+        const metadataForm = document.getElementById('metadataForm');
+        const responseMessageDiv = document.getElementById('responseMessage');
+        const saveButton = metadataForm.querySelector('button[type="submit"]');
+
+        // Function to display messages to the user
+        function displayMessage(message, type) {
+            responseMessageDiv.textContent = message;
+            responseMessageDiv.classList.remove('hidden', 'response-success', 'response-error');
+            if (type === 'success') {
+                responseMessageDiv.classList.add('response-success');
+            } else if (type === 'error') {
+                responseMessageDiv.classList.add('response-error');
+            }
+            // Scroll to the message to ensure visibility
+            responseMessageDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Function to clear messages
+        function clearMessage() {
+            responseMessageDiv.classList.add('hidden');
+            responseMessageDiv.textContent = '';
+        }
+
+        // Intercept form submission
+        metadataForm.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Prevent default form submission
+
+            clearMessage(); // Clear any previous messages
+            saveButton.disabled = true; // Disable button during processing
+            saveButton.textContent = 'Saving...';
+
+            // 1. Collect form data manually to include disabled fields if needed
+            // However, for '/update_metadata', your backend uses `request.form`
+            // and the `campaign_id` is pulled from the session, so disabled status isn't an issue there.
+            // But we'll still use FormData for simplicity and allow direct submission for the backend.
+            const formData = new FormData(metadataForm);
+
+            // Add the disabled campaign_id back to formData if you want to explicitly send it.
+            // Your backend gets it from session, so this isn't strictly necessary for /update_metadata.
+            // But if you ever change the backend to rely on the form for cid, this is how you'd send it.
+            const campaignIdInput = document.getElementById('campaign_id');
+            if (campaignIdInput && campaignIdInput.disabled) {
+                formData.append('campaign_id', campaignIdInput.value);
+            }
+            // Same for run_date if it were ever needed on the backend from the form.
+            const runDateInput = document.getElementById('run_date');
+            if (runDateInput && runDateInput.disabled) {
+                formData.append('run_date', runDateInput.value);
+            }
+
+            try {
+                // 2. Send metadata update request using FormData directly
+                // This sends `application/x-www-form-urlencoded` or `multipart/form-data`
+                // which matches your backend's `request.form` expectation.
+                const updateResponse = await fetch(`${BASE_URL}/update_metadata`, {
+                    method: 'POST',
+                    body: formData // Send FormData directly
+                });
+
+                // Check for redirect (302) if backend redirects on success
+                if (updateResponse.redirected) {
+                    displayMessage('Metadata updated successfully!', 'success');
+                    console.log('Redirect detected after metadata update. Backend handled logging.');
+                    // In your backend, _upload_metadata_html also handles S3 upload.
+                    // The submit_metadata route sends a 'Thank you' response but redirects to /metadata.
+                    // If update_metadata also redirects, we won't get a JSON response from it.
+                    // So, if redirected, assume success and proceed to log.
+
+                    // 3. Prepare and send log activity request
+                    // For logging, we still want to send JSON as per your backend's /log_activity route.
+                    const metadataForLog = {};
+                    for (const [key, value] of formData.entries()) {
+                         // Filter out disabled fields if you don't want them in the log message detail
+                        if (key !== 'campaign_id' && key !== 'run_date') {
+                             metadataForLog[key] = value;
+                        }
+                    }
+
+                    let logMessage = "The archive file has been updated. Details:\n";
+                    for (const key in metadataForLog) {
+                        logMessage += `${key}: ${metadataForLog[key]}\n`;
+                    }
+                    if (campaignIdInput && campaignIdInput.value) {
+                         logMessage = `Metadata updated for Campaign ID: ${campaignIdInput.value}.\n` + logMessage;
+                    }
+
+
+                    const logResponse = await fetch(`${BASE_URL}/log_activity`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message: logMessage })
+                    });
+
+                    const logData = await logResponse.json();
+
+                    if (logResponse.ok) {
+                        console.log('Log activity successful:', logData.message);
+                        displayMessage('Metadata updated and activity logged successfully!', 'success');
+                    } else {
+                        console.error('Error logging activity:', logData.error || 'Unknown error');
+                        displayMessage(`Metadata updated, but failed to log activity: ${logData.error || 'Unknown error'}`, 'error');
+                    }
+
+                    // After a successful update, you might want to reload the data to ensure consistency,
+                    // or redirect as the backend does. Given your backend redirects,
+                    // a page reload would naturally happen. If not redirecting, uncomment loadMetadata().
+                    // await loadMetadata(); // Reload data to show any changes or confirmation
+
+                } else {
+                    // If not redirected, process as JSON response (e.g., error message from backend)
+                    const updateData = await updateResponse.json();
+                    displayMessage(`Error updating metadata: ${updateData.error || 'Unknown error'}`, 'error');
+                    console.error('Metadata update failed:', updateData.error);
+                }
+
+            } catch (error) {
+                console.error('Fetch error during metadata update or logging:', error);
+                displayMessage(`Network error: ${error.message}`, 'error');
+            } finally {
+                saveButton.disabled = false; // Re-enable button
+                saveButton.textContent = 'Save';
+            }
+        });
+
+        // Existing function to load metadata on page load
+        async function loadMetadata() {
+            try {
+                // The /get_metadata endpoint expects campaign_id from session, not body
+                const response = await fetch(`${BASE_URL}/get_metadata`, { method: 'POST' });
+
+                if (!response.ok) {
+                    const errorJson = await response.json(); // Backend sends JSON for errors
+                    console.error("❌ Failed to load metadata. Status:", response.status);
+                    console.error("🔍 Server responded with:", errorJson.error || "Unknown error");
+                    displayMessage(`Error loading metadata: ${errorJson.error || 'Unknown error'}`, 'error');
+                    return;
+                }
+
+                const data = await response.json();
+                if (!data || !data.campaign_id) {
+                    displayMessage("No campaign metadata found or selected. Please select a campaign.", 'error');
+                    return;
+                }
+
+                // Populate form fields
+                for (const key in data) {
+                    const el = document.getElementById(key);
+                    if (el) {
+                        // Handle textarea values correctly
+                        if (el.tagName === 'TEXTAREA') {
+                            el.value = data[key] ?? '';
+                        } else {
+                            el.value = data[key] ?? '';
+                        }
+                    }
+                }
+
+            } catch (error) {
+                console.error("❌ Exception while loading metadata:", error);
+                displayMessage("Error loading metadata (network issue or server down).", 'error');
+            }
+        }
+
+        loadMetadata();
+    });
+</script>
+
+</body>
+</html>

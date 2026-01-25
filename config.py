@@ -3,7 +3,18 @@ import os
 class Config:
     """
     Configuration class for the application.
-    It fetches configuration settings from environment variables.
+    It fetches configuration settings from environment variables.  The environment variables can be set in the 
+    hypercorn service file.
+    The database is the same as the one used in the stationary network server. 
+    
+    The table name here is campaign_locations 
+
+                            Environment="DB_USER=uhi"
+                            Environment="DB_PASSWORD=uhi"
+                            Environment="DB_HOST=localhost"
+                            Environment="DB_NAME=uhi"
+                            Environment="DB_PORT=3306"
+                            Environment="DB_AUTH_PLUGIN=mysql_native_password"
     """
 
     # Database configuration
@@ -16,10 +27,10 @@ class Config:
         'auth_plugin': os.getenv('DB_AUTH_PLUGIN', 'mysql_native_password')  # Default auth plugin
     }
 
-    # API keys and secrets
-    API_KEY = os.getenv('API_KEY', 'default_api_key')  # Default API key
-    API_SECRET = os.getenv('API_SECRET', 'default_api_secret')  # Default API secret
-    STATION_ID = os.getenv('STATION_ID', 'default_station_id')  # Default station ID
+            # API keys and secrets
+            #API_KEY = os.getenv('API_KEY', 'default_api_key')  # Default API key
+            #API_SECRET = os.getenv('API_SECRET', 'default_api_secret')  # Default API secret
+            #STATION_ID = os.getenv('STATION_ID', 'default_station_id')  # Default station ID
 
     # Additional configurations
     DEBUG = os.getenv('DEBUG', 'False') == 'True'  # Convert string to boolean
@@ -37,10 +48,10 @@ class Config:
         for key, value in cls.DB_CONFIG.items():
             print(f"  {key}: {value}")
 
-        print("\nAPI Configuration:")
-        print(f"  API_KEY: {cls.API_KEY}")
-        print(f"  API_SECRET: {cls.API_SECRET}")
-        print(f"  STATION_ID: {cls.STATION_ID}")
+                #print("\nAPI Configuration:")
+                #print(f"  API_KEY: {cls.API_KEY}")
+                #print(f"  API_SECRET: {cls.API_SECRET}")
+                #print(f"  STATION_ID: {cls.STATION_ID}")
 
         print("\nAdditional Configuration:")
         print(f"  DEBUG: {cls.DEBUG}")

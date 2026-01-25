@@ -1,0 +1,240 @@
+ 🔁 Cron sync started.
+ Found 7 locations from uhi-locations/locations.json.
+  
+  
+ --- Processing location: Livermore, CA (Bucket: uhi-livermore) ---
+  
+ Found 532 file(s) in S3 bucket 'uhi-livermore'.
+ Filtered to 83 unique campaign names from S3.
+ Found 83 campaign_id(s) already in DB for 'uhi-livermore'.
+ ✅ No new campaign_id(s) to insert for 'uhi-livermore'.
+  
+  
+ --- Processing location: Tracy, CA (Bucket: uhi-tracy) ---
+  
+ Found 31 file(s) in S3 bucket 'uhi-tracy'.
+ Filtered to 4 unique campaign names from S3.
+ Found 4 campaign_id(s) already in DB for 'uhi-tracy'.
+ ✅ No new campaign_id(s) to insert for 'uhi-tracy'.
+  
+  
+ --- Processing location: Pleasanton, CA (Bucket: uhi-pleasanton) ---
+  
+ Found 30 file(s) in S3 bucket 'uhi-pleasanton'.
+ Filtered to 3 unique campaign names from S3.
+ Found 5 campaign_id(s) already in DB for 'uhi-pleasanton'.
+ ✅ No new campaign_id(s) to insert for 'uhi-pleasanton'.
+  
+  
+ --- Processing location: Livermore High School, Livermore, CA (Bucket: uhi-livermore-high-school) ---
+  
+ Found 23 file(s) in S3 bucket 'uhi-livermore-high-school'.
+ Filtered to 2 unique campaign names from S3.
+ Found 2 campaign_id(s) already in DB for 'uhi-livermore-high-school'.
+ ✅ No new campaign_id(s) to insert for 'uhi-livermore-high-school'.
+  
+  
+ --- Processing location: Granada High School, Livermore, CA (Bucket: uhi-granada-high-school) ---
+  
+ Found 19 file(s) in S3 bucket 'uhi-granada-high-school'.
+ Filtered to 3 unique campaign names from S3.
+ Found 3 campaign_id(s) already in DB for 'uhi-granada-high-school'.
+ ✅ No new campaign_id(s) to insert for 'uhi-granada-high-school'.
+  
+  
+ --- Processing location: Amador Valley High School, Pleasanton, CA (Bucket: uhi-amador-valley-high-school) ---
+  
+ Found 6 file(s) in S3 bucket 'uhi-amador-valley-high-school'.
+ Filtered to 1 unique campaign names from S3.
+ Found 1 campaign_id(s) already in DB for 'uhi-amador-valley-high-school'.
+ ✅ No new campaign_id(s) to insert for 'uhi-amador-valley-high-school'.
+  
+  
+ --- Processing location: John C. Kimball High School, Tracy, CA (Bucket: uhi-john-c-kimball-high-school) ---
+  
+ Found 6 file(s) in S3 bucket 'uhi-john-c-kimball-high-school'.
+ Filtered to 1 unique campaign names from S3.
+ Found 1 campaign_id(s) already in DB for 'uhi-john-c-kimball-high-school'.
+ ✅ No new campaign_id(s) to insert for 'uhi-john-c-kimball-high-school'.
+ ✅ Cron sync complete.
+
+ 🔁 Cron sync started.
+ Found 7 locations from uhi-locations/locations.json.
+  
+  
+ --- Processing location: Livermore, CA (Bucket: uhi-livermore) ---
+  
+ Found 532 file(s) in S3 bucket 'uhi-livermore'.
+ Filtered to 83 unique campaign names from S3.
+ Found 83 campaign_id(s) already in DB for 'uhi-livermore'.
+ ✅ No new campaign_id(s) to insert for 'uhi-livermore'.
+  
+  
+ --- Processing location: Tracy, CA (Bucket: uhi-tracy) ---
+  
+ Found 31 file(s) in S3 bucket 'uhi-tracy'.
+ Filtered to 4 unique campaign names from S3.
+ Found 4 campaign_id(s) already in DB for 'uhi-tracy'.
+ ✅ No new campaign_id(s) to insert for 'uhi-tracy'.
+  
+  
+ --- Processing location: Pleasanton, CA (Bucket: uhi-pleasanton) ---
+  
+ Found 30 file(s) in S3 bucket 'uhi-pleasanton'.
+ Filtered to 3 unique campaign names from S3.
+ Found 5 campaign_id(s) already in DB for 'uhi-pleasanton'.
+ ✅ No new campaign_id(s) to insert for 'uhi-pleasanton'.
+  
+  
+ --- Processing location: Livermore High School, Livermore, CA (Bucket: uhi-livermore-high-school) ---
+  
+ Found 23 file(s) in S3 bucket 'uhi-livermore-high-school'.
+ Filtered to 2 unique campaign names from S3.
+ Found 2 campaign_id(s) already in DB for 'uhi-livermore-high-school'.
+ ✅ No new campaign_id(s) to insert for 'uhi-livermore-high-school'.
+  
+  
+ --- Processing location: Granada High School, Livermore, CA (Bucket: uhi-granada-high-school) ---
+  
+ Found 19 file(s) in S3 bucket 'uhi-granada-high-school'.
+ Filtered to 3 unique campaign names from S3.
+ Found 3 campaign_id(s) already in DB for 'uhi-granada-high-school'.
+ ✅ No new campaign_id(s) to insert for 'uhi-granada-high-school'.
+  
+  
+ --- Processing location: Amador Valley High School, Pleasanton, CA (Bucket: uhi-amador-valley-high-school) ---
+  
+ Found 6 file(s) in S3 bucket 'uhi-amador-valley-high-school'.
+ Filtered to 1 unique campaign names from S3.
+ Found 1 campaign_id(s) already in DB for 'uhi-amador-valley-high-school'.
+ ✅ No new campaign_id(s) to insert for 'uhi-amador-valley-high-school'.
+  
+  
+ --- Processing location: John C. Kimball High School, Tracy, CA (Bucket: uhi-john-c-kimball-high-school) ---
+  
+ Found 6 file(s) in S3 bucket 'uhi-john-c-kimball-high-school'.
+ Filtered to 1 unique campaign names from S3.
+ Found 1 campaign_id(s) already in DB for 'uhi-john-c-kimball-high-school'.
+ ✅ No new campaign_id(s) to insert for 'uhi-john-c-kimball-high-school'.
+ ✅ Cron sync complete.
+
+ 🔁 Cron sync started.
+ Found 7 locations from uhi-locations/locations.json.
+  
+  
+ --- Processing location: Livermore, CA (Bucket: uhi-livermore) ---
+  
+ Found 532 file(s) in S3 bucket 'uhi-livermore'.
+ Filtered to 83 unique campaign names from S3.
+ Found 83 campaign_id(s) already in DB for 'uhi-livermore'.
+ ✅ No new campaign_id(s) to insert for 'uhi-livermore'.
+  
+  
+ --- Processing location: Tracy, CA (Bucket: uhi-tracy) ---
+  
+ Found 31 file(s) in S3 bucket 'uhi-tracy'.
+ Filtered to 4 unique campaign names from S3.
+ Found 4 campaign_id(s) already in DB for 'uhi-tracy'.
+ ✅ No new campaign_id(s) to insert for 'uhi-tracy'.
+  
+  
+ --- Processing location: Pleasanton, CA (Bucket: uhi-pleasanton) ---
+  
+ Found 30 file(s) in S3 bucket 'uhi-pleasanton'.
+ Filtered to 3 unique campaign names from S3.
+ Found 5 campaign_id(s) already in DB for 'uhi-pleasanton'.
+ ✅ No new campaign_id(s) to insert for 'uhi-pleasanton'.
+  
+  
+ --- Processing location: Livermore High School, Livermore, CA (Bucket: uhi-livermore-high-school) ---
+  
+ Found 23 file(s) in S3 bucket 'uhi-livermore-high-school'.
+ Filtered to 2 unique campaign names from S3.
+ Found 2 campaign_id(s) already in DB for 'uhi-livermore-high-school'.
+ ✅ No new campaign_id(s) to insert for 'uhi-livermore-high-school'.
+  
+  
+ --- Processing location: Granada High School, Livermore, CA (Bucket: uhi-granada-high-school) ---
+  
+ Found 19 file(s) in S3 bucket 'uhi-granada-high-school'.
+ Filtered to 3 unique campaign names from S3.
+ Found 3 campaign_id(s) already in DB for 'uhi-granada-high-school'.
+ ✅ No new campaign_id(s) to insert for 'uhi-granada-high-school'.
+  
+  
+ --- Processing location: Amador Valley High School, Pleasanton, CA (Bucket: uhi-amador-valley-high-school) ---
+  
+ Found 6 file(s) in S3 bucket 'uhi-amador-valley-high-school'.
+ Filtered to 1 unique campaign names from S3.
+ Found 1 campaign_id(s) already in DB for 'uhi-amador-valley-high-school'.
+ ✅ No new campaign_id(s) to insert for 'uhi-amador-valley-high-school'.
+  
+  
+ --- Processing location: John C. Kimball High School, Tracy, CA (Bucket: uhi-john-c-kimball-high-school) ---
+  
+ Found 6 file(s) in S3 bucket 'uhi-john-c-kimball-high-school'.
+ Filtered to 1 unique campaign names from S3.
+ Found 1 campaign_id(s) already in DB for 'uhi-john-c-kimball-high-school'.
+ ✅ No new campaign_id(s) to insert for 'uhi-john-c-kimball-high-school'.
+ ✅ Cron sync complete.
+
+ 🔁 Cron sync started.
+ Found 7 locations from uhi-locations/locations.json.
+  
+  
+ --- Processing location: Livermore, CA (Bucket: uhi-livermore) ---
+  
+ Found 532 file(s) in S3 bucket 'uhi-livermore'.
+ Filtered to 83 unique campaign names from S3.
+ Found 83 campaign_id(s) already in DB for 'uhi-livermore'.
+ ✅ No new campaign_id(s) to insert for 'uhi-livermore'.
+  
+  
+ --- Processing location: Tracy, CA (Bucket: uhi-tracy) ---
+  
+ Found 31 file(s) in S3 bucket 'uhi-tracy'.
+ Filtered to 4 unique campaign names from S3.
+ Found 4 campaign_id(s) already in DB for 'uhi-tracy'.
+ ✅ No new campaign_id(s) to insert for 'uhi-tracy'.
+  
+  
+ --- Processing location: Pleasanton, CA (Bucket: uhi-pleasanton) ---
+  
+ Found 30 file(s) in S3 bucket 'uhi-pleasanton'.
+ Filtered to 3 unique campaign names from S3.
+ Found 5 campaign_id(s) already in DB for 'uhi-pleasanton'.
+ ✅ No new campaign_id(s) to insert for 'uhi-pleasanton'.
+  
+  
+ --- Processing location: Livermore High School, Livermore, CA (Bucket: uhi-livermore-high-school) ---
+  
+ Found 23 file(s) in S3 bucket 'uhi-livermore-high-school'.
+ Filtered to 2 unique campaign names from S3.
+ Found 2 campaign_id(s) already in DB for 'uhi-livermore-high-school'.
+ ✅ No new campaign_id(s) to insert for 'uhi-livermore-high-school'.
+  
+  
+ --- Processing location: Granada High School, Livermore, CA (Bucket: uhi-granada-high-school) ---
+  
+ Found 19 file(s) in S3 bucket 'uhi-granada-high-school'.
+ Filtered to 3 unique campaign names from S3.
+ Found 3 campaign_id(s) already in DB for 'uhi-granada-high-school'.
+ ✅ No new campaign_id(s) to insert for 'uhi-granada-high-school'.
+  
+  
+ --- Processing location: Amador Valley High School, Pleasanton, CA (Bucket: uhi-amador-valley-high-school) ---
+  
+ Found 6 file(s) in S3 bucket 'uhi-amador-valley-high-school'.
+ Filtered to 1 unique campaign names from S3.
+ Found 1 campaign_id(s) already in DB for 'uhi-amador-valley-high-school'.
+ ✅ No new campaign_id(s) to insert for 'uhi-amador-valley-high-school'.
+  
+  
+ --- Processing location: John C. Kimball High School, Tracy, CA (Bucket: uhi-john-c-kimball-high-school) ---
+  
+ Found 6 file(s) in S3 bucket 'uhi-john-c-kimball-high-school'.
+ Filtered to 1 unique campaign names from S3.
+ Found 1 campaign_id(s) already in DB for 'uhi-john-c-kimball-high-school'.
+ ✅ No new campaign_id(s) to insert for 'uhi-john-c-kimball-high-school'.
+ ✅ Cron sync complete.
+

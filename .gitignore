@@ -1,1 +1,8 @@
-logs
+*.logs
+crontab.log
+*.tmp
+*.bak
+*.swp
+*.pid
+*.log
+*.cache

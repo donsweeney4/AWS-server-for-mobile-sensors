@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Campaign Metadata</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        form {
+            max-width: 600px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            box-sizing: border-box;
+        }
+        input[disabled] {
+            background-color: #f0f0f0;
+            color: #555;
+        }
+        input.editable,
+        textarea.editable {
+            background-color: #ffffcc; /* soft yellow */
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 16px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Edit Campaign Metadata</h1>
+
+<form method="POST" action="/update_metadata">
+
+    <label for="campaign_id">Campaign ID (read only)</label>
+  <input
+    id="campaign_id"
+    name="campaign_id"
+    type="text"
+    value="{{ campaign_id or '' }}"
+  />
+
+    <label for="run_date">Run Date (read only)</label>
+  <input
+    id="run_date"
+    name="run_date"
+    type="text"
+    value="{{ run_date or '' }}"
+  />
+
+
+
+
+
+
+
+  <label for="campaign_title">Title</label>
+  <input
+    id="campaign_title"
+    name="campaign_title"
+    type="text"
+    value="{{ campaign_title or '' }}"
+  />
+
+  <label for="campaign_location">Location</label>
+  <input
+    id="campaign_location"
+    name="campaign_location"
+    type="text"
+    value="{{ campaign_location or '' }}"
+  />
+
+  <label for="short_description">Short description</label>
+  <textarea
+    id="short_description"
+    name="short_description"
+  >{{ short_description or '' }}</textarea>
+
+
+  <label for="owners">Ownes</label>
+  <textarea
+    id="owners"
+    name="owners"
+  >{{ owners or '' }}</textarea>
+
+
+    <label for="notes">Notes</label>
+  <textarea
+    id="notes"
+    name="notes"
+  >{{ notes or '' }}</textarea>
+
+
+
+
+  
+  <button type="submit">Save</button>
+</form>
+
+
+<script>
+    async function loadMetadata() {
+        try {
+            const response = await fetch('/get_metadata', { method: 'POST' });
+
+            if (!response.ok) {
+                const text = await response.text();
+                console.error("❌ Failed to load metadata. Status:", response.status);
+                console.error("🔍 Server responded with:", text);
+                alert("Error loading metadata.");
+                return;
+            }
+
+            const data = await response.json();
+            if (!data || !data.campaign_id) {
+                alert("No campaign metadata found.");
+                return;
+            }
+
+            // Populate form fields
+            for (const key in data) {
+                const el = document.getElementById(key);
+                if (el) el.value = data[key] ?? '';
+            }
+
+        } catch (error) {
+            console.error("❌ Exception while loading metadata:", error);
+            alert("Error loading metadata (see console).");
+        }
+    }
+
+    loadMetadata();
+</script>
+
+</body>
+</html>

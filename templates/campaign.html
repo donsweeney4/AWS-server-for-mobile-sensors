@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="{{ url_for('static', filename='js/error-logger.js') }}"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Campaign</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Import the Inter font for a modern look */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light background for modern look */
+            color: #333;
+            /* Using Tailwind for margin and flex layout on body */
+        }
+
+        /* Custom background colors for alternating rows, based on your previous definitions */
+        .odd-row-bg {
+            background-color: #ecfcf1; /* Lighter shade of green */
+        }
+        .even-row-bg {
+            background-color: #e0f8e9; /* Slightly darker shade of green */
+        }
+
+        /* Hover effect for rows */
+        .odd-row-bg:hover, .even-row-bg:hover {
+            background-color: #d1f7df; /* Hover effect */
+        }
+
+        /* Styling for checkboxes and radio buttons */
+        input[type="radio"], input[type="checkbox"] {
+            transform: scale(1.2); /* Slightly larger checkboxes/radios */
+            cursor: pointer;
+            /* Tailwind will further style these if using @tailwindcss/forms plugin */
+        }
+    </style>
+</head>
+<body class="p-5 flex flex-col items-center min-h-screen">
+
+    <h1 class="text-3xl font-bold text-gray-800 mb-4 text-center">Select a Campaign</h1>
+    <h3 class="text-xl text-gray-700 mb-6 text-center">Ordered by run date newest to oldest</h3>
+    
+    <div class="mb-6 text-center">
+        <input type="radio" id="show_all" name="visibility" value="show_all" checked class="form-radio h-5 w-5 text-blue-600"> 
+        <label for="show_all" class="ml-2 mr-4 text-gray-700 cursor-pointer">Show Active Campaigns</label>
+        <input type="radio" id="show_hidden" name="visibility" value="show_hidden" class="form-radio h-5 w-5 text-blue-600">
+        <label for="show_hidden" class="ml-2 text-gray-700 cursor-pointer">Show All Campaigns (including Hidden)</label>
+    </div>
+
+    <!-- The form wraps the dynamically generated table content, allowing radio button submission -->
+    <!-- Table width is set to 90% of the viewport width -->
+        <form id="campaignForm" class="w-[90vw]">
+        <div class="border-4 border-black rounded-lg overflow-hidden shadow-xl flex flex-col" style="max-height: 70vh;">
+            <div class="flex-shrink-0 bg-gray-300 text-black font-bold border-b-2 border-black sticky top-0 z-10">
+                <div class="flex text-center">
+                    <!-- Updated Header cell widths -->
+                    <div class="p-3 w-[5%] border-r-2 border-black flex items-center justify-center">Select</div>
+                    <div class="p-3 w-[15%] border-r-2 border-black flex items-center justify-center">Run Date</div>
+                    <div class="p-3 w-[25%] border-r-2 border-black flex items-center justify-center">Campaign ID</div>
+                    <div class="p-3 w-[25%] border-r-2 border-black flex items-center justify-center">Title</div>
+                    <div class="p-3 w-[25%] border-r-2 border-black flex items-center justify-center">Owners</div>
+                    <div class="p-3 w-[5%] flex items-center justify-center">Hide</div>
+                </div>
+            </div>
+
+            <div id="campaignRadios" class="flex-grow overflow-y-auto">
+                <div class="flex items-center justify-center h-full p-4 text-gray-500" id="loading-indicator">
+                    Loading campaigns...
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <script>
+        // Get references to the radio buttons
+        const showAllRadio = document.getElementById('show_all');
+        const showHiddenRadio = document.getElementById('show_hidden');
+
+        // Add event listeners to trigger loadCampaigns on change
+        showAllRadio.addEventListener('change', loadCampaigns);
+        showHiddenRadio.addEventListener('change', loadCampaigns);
+
+        // ========================================================================
+        // NEW FUNCTION: Handles selecting a campaign and moving to the next page
+        // ========================================================================
+        async function selectCampaign(campaignId) {
+            if (!campaignId) {
+                alert("Invalid campaign selected.");
+                return;
+            }
+            console.log(`Sending campaign ID to session: ${campaignId}`);
+
+            try {
+                // Send the selected ID to our new session route
+                const response = await fetch('/set_campaign_session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ campaign_id: campaignId })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // It worked! Now go to the processing page.
+                    window.location.href = '/renderprocessdata';
+                } else {
+                    // The server returned an error
+                    alert("Error setting campaign: " + (result.error || 'Unknown server error'));
+                }
+
+            } catch (error) {
+                console.error("Failed to set campaign session:", error);
+                alert("A client-side error occurred. Could not set campaign.");
+            }
+        }
+
+
+        /**
+         * Fetches campaign data from the backend and renders it into the table.
+         */
+        async function loadCampaigns() {
+            const tableBody = document.getElementById('campaignRadios');
+            tableBody.innerHTML = `<div class="flex items-center justify-center h-full p-4 text-gray-500">Loading campaigns...</div>`;
+            const showHidden = showHiddenRadio.checked;
+
+            try {
+                const response = await fetch('/get_campaign_names', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ show_hidden: showHidden })
+                });
+
+                if (!response.ok) {
+                    let errorText = await response.text();
+                    // This handles both JSON errors and HTML errors (like "Unexpected token '<'")
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        errorText = errorJson.error || 'Unknown error';
+                    } catch (e) {
+                         // It wasn't JSON, it was probably HTML.
+                        console.error("Server returned non-JSON response:", errorText);
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
+                }
+
+                const result = await response.json();
+                const campaigns = result.campaigns;
+                const selected = result.selected;
+
+                tableBody.innerHTML = '';
+
+                if (!Array.isArray(campaigns) || campaigns.length === 0) {
+                    tableBody.innerHTML = '<div class="p-4 text-gray-600 text-center">No campaigns available.</div>';
+                    return;
+                }
+
+                campaigns.forEach((campaign, index) => {
+                    const id = campaign.campaign_id ?? 'Unknown';
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = `flex text-center items-center p-3 border-b-2 border-gray-400 last:border-b-0 ${index % 2 === 0 ? 'even-row-bg' : 'odd-row-bg'}`;
+
+                    // Column 1: Radio button
+                    const cellSelect = document.createElement('div');
+                    cellSelect.className = 'w-[5%] flex items-center justify-center border-r-2 border-black';
+                    const radio = document.createElement('input');
+                    radio.type = 'radio';
+                    radio.name = 'campaign_id';
+                    radio.value = id;
+                    radio.className = 'form-radio h-5 w-5 text-green-600';
+                    if (id === selected) {
+                        radio.checked = true;
+                    }
+                    
+                    // ========================================================================
+                    // THIS IS THE OTHER KEY CHANGE
+                    // Instead of submitting the form, it now calls our new function
+                    // ========================================================================
+                    radio.addEventListener('change', () => selectCampaign(id));
+                    cellSelect.appendChild(radio);
+                    rowDiv.appendChild(cellSelect);
+
+                    // ... (The rest of your columns are perfectly fine, no changes needed there) ...
+                    // Column 2: Run Date
+                    const cellRunDate = document.createElement('div');
+                    cellRunDate.className = 'w-[15%] flex items-center justify-center border-r-2 border-black';
+                    cellRunDate.textContent = campaign.run_date ?? '';
+                    rowDiv.appendChild(cellRunDate);
+
+                    // Column 3: Campaign ID
+                    const cellCampaignId = document.createElement('div');
+                    cellCampaignId.className = 'w-[25%] flex items-center justify-center border-r-2 border-black';
+                    cellCampaignId.textContent = campaign.campaign_id ?? '';
+                    rowDiv.appendChild(cellCampaignId);
+
+                    // Column 4: Title
+                    const cellTitle = document.createElement('div');
+                    cellTitle.className = 'w-[25%] flex items-center justify-center border-r-2 border-black';
+                    cellTitle.textContent = campaign.campaign_title ?? '';
+                    rowDiv.appendChild(cellTitle);
+
+                    // Column 5: Owners
+                    const cellOwners = document.createElement('div');
+                    cellOwners.className = 'w-[25%] flex items-center justify-center border-r-2 border-black';
+                    cellOwners.textContent = campaign.owners ?? '';
+                    rowDiv.appendChild(cellOwners);
+
+                    // Column 6: Hide checkbox
+                    const cellHide = document.createElement('div');
+                    cellHide.className = 'w-[5%] flex items-center justify-center';
+                    const hiddenCheckbox = document.createElement('input'); 
+                    hiddenCheckbox.type = 'checkbox';
+                    hiddenCheckbox.checked = !!campaign.hidden;
+                    hiddenCheckbox.className = 'form-checkbox h-5 w-5 text-red-600';
+                    hiddenCheckbox.addEventListener('change', async (event) => {
+                        const isHidden = event.target.checked;
+                        try {
+                            const updateResponse = await fetch('/update_hidden', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ campaign_id: id, hidden: isHidden })
+                            });
+                            if (!updateResponse.ok) {
+                                console.error('Failed to update hidden status');
+                                alert('Failed to update campaign hidden status.'); 
+                                event.target.checked = !isHidden;
+                            }
+                        } catch (updateErr) {
+                            console.error('Error updating hidden status:', updateErr);
+                            alert('An error occurred while updating hidden status.'); 
+                            event.target.checked = !isHidden;
+                        }
+                    });
+                    cellHide.appendChild(hiddenCheckbox);
+                    rowDiv.appendChild(cellHide);
+
+                    tableBody.appendChild(rowDiv);
+                });
+
+            } catch (err) {
+                console.error('Error loading campaigns:', err);
+                tableBody.innerHTML = `<div class="p-4 text-red-600 text-center">Error loading campaigns: ${err.message}.</div>`;
+            }
+        }
+
+        // Load campaigns when the page first loads
+        window.onload = loadCampaigns;
+    </script>
+
+</body>
+</html>
