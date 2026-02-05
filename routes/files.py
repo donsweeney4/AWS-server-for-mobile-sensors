@@ -74,9 +74,7 @@ async def get_presigned_url():
     Generates a pre-signed S3 PUT URL for uploading CSV files.
     """
     s3_client = current_app.s3_client
-    # Presigned URLs should go to the UPLOADS bucket
-    s3_bucket = current_app.config['S3_BUCKET_UPLOADS']
-    s3_region = current_app.config['S3_REGION']
+    s3_region = current_app.config.get('S3_REGION', 'us-west-2')
 
     try:
       
