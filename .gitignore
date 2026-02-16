@@ -6,3 +6,15 @@ crontab.log
 *.pid
 *.log
 *.cache
+# Ignore files with HOLD anywhere in the name (case-insensitive)
+*[Hh][Oo][Ll][Dd]*
+
+# Ignore files with JUNK anywhere in the name (case-insensitive)
+*[Jj][Uu][Nn][Kk]*
+# Ignore files with LOG anywhere in the name (case-insensitive)
+*[Ll][Oo][Gg]*
+
+# Ignore files with BACKUP anywhere in the name (case-insensitive)
+*[Bb][Aa][Cc][Kk][Uu][Pp]*
+__pycache__/
+*.pyc

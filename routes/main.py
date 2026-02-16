@@ -11,8 +11,35 @@ html_template = "index.html" # Default HTML template for the root route
 ##//####### Health check ######################################################
 @main_bp.route('/health')
 def health():
-    """Simple health check endpoint."""
-    return "OK", 200
+    """
+    Combined health check endpoint that monitors both Server 1 and Server 2.
+    Returns 200 only if both servers are healthy.
+    """
+    health_status = {
+        "server1": "OK",
+        "server2": "UNKNOWN"
+    }
+    
+    # Server 1 is healthy if we got here
+    # Now check Server 2
+    try:
+        response = requests.get('http://localhost:5001/health', timeout=2)
+        if response.status_code == 200:
+            health_status["server2"] = "OK"
+            # Both servers healthy
+            return jsonify(health_status), 200
+        else:
+            health_status["server2"] = f"UNHEALTHY (status: {response.status_code})"
+            return jsonify(health_status), 503
+    except requests.exceptions.Timeout:
+        health_status["server2"] = "TIMEOUT"
+        return jsonify(health_status), 503
+    except requests.exceptions.ConnectionError:
+        health_status["server2"] = "CONNECTION_REFUSED"
+        return jsonify(health_status), 503
+    except Exception as e:
+        health_status["server2"] = f"ERROR: {str(e)}"
+        return jsonify(health_status), 503
 
 ##//#####  RENDERING ROUTES ###############################################
 
@@ -47,8 +74,12 @@ async def renderprocessdata():
 
     logger.info("Rendering processdata page")
     
+    # Convert temperature drift from deg F/sec to deg F/hour for template display
+    template_vars = dict(session)
+    template_vars['temperature_drift_f'] = round(session.get('temperature_drift_f', 0.0) * 3600, 3)
+    
     # Pass session values as keyword arguments to the template
-    return await render_template("renderprocessdata.html", **session)  
+    return await render_template("renderprocessdata.html", **template_vars)  
 
 ##//#############################################################################
 @main_bp.route('/location')

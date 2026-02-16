@@ -103,13 +103,13 @@
 
 
             <label for="temperature_drift_f">
-              <br>Temperature Drift (deg F/sec):
+              <br>Temperature Drift (deg F/hour):
                 <span class="help-icon" onclick="toggleHelp('driftHelp')">ℹ️</span>
               </label>
               <span class="help-text" id="driftHelp">Adjusts temperature values to correct for linear temperature drift over the region during the survey. <br>
                 A negative temperature drift value indicates that the ambient temperature is decreasing over time and needs to be corrected.<br/>
                 The default value of 0.0 means linear regession is used to compute the drift and applied to correct the temperatures.<br>
-                The drift value is a slope and has units of deg F per second.</span><br>
+                The drift value is a slope and has units of deg F per hour.</span><br>
 
               <input type="number" id="temperature_drift_f" value="{{ temperature_drift_f }}">  
 
@@ -151,7 +151,7 @@
   <h2>Processing Summary</h2>
   <ul>
 
-    <li>Temperature Drift: <span id="driftOut"></span> °F/sec</li>
+    <li>Temperature Drift: <span id="driftOut"></span> °F/hour</li>
     <li>Campaign Duration: <span id="durationOut"></span> minutes</li>
     <li>Maximum Temperature Correction: <span id="correctionOut"></span> °F</li>
     <li>Maximum Corrected Temperature Detected: <span id="maxCorrectedTemperatureOut"></span> °F</li>
@@ -245,7 +245,7 @@
         
         // Update summary section with results
         document.getElementById("summarySection").style.display = "block";
-        document.getElementById("driftOut").textContent = result.temperature_drift_f;
+        document.getElementById("driftOut").textContent = result.temperature_drift_f.toFixed(3);
         document.getElementById("durationOut").textContent = result.campaign_duration_minutes;
         document.getElementById("correctionOut").textContent = result.maximum_temperature_correction_f;
         document.getElementById("maxCorrectedTemperatureOut").textContent = result.max_corrected_temperature_f;

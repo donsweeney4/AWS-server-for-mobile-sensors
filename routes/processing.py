@@ -70,7 +70,7 @@ async def run_processing():
         end_time_adjustment_minutes = parse_float('end_time_adjustment_minutes', session['end_time_adjustment_minutes'])
         cutoff_speed_MPH = parse_float('cutoff_speed_MPH', session['cutoff_speed_MPH'])
         slope_option = parse_int('slope_option', session['slope_option'])
-        temperature_drift_f_input = parse_float('temperature_drift_f', session['temperature_drift_f']) 
+        temperature_drift_f_input = parse_float('temperature_drift_f', session['temperature_drift_f']) / 3600  # Convert from deg F/hour to deg F/sec 
         
         # (I also fixed a typo here, removing a stray 'A' from your original file)
         color_table_min_quantile = parse_int('color_table_min_quantile', session['min_q'])
@@ -109,7 +109,7 @@ async def run_processing():
         return jsonify({
             "status": "ok",
             "message": "Processing completed successfully",
-            "temperature_drift_f": session.get("temperature_drift_f"),
+            "temperature_drift_f": round(session.get("temperature_drift_f") * 3600, 3),  # Convert from deg F/sec to deg F/hour with 3 decimal places
             "campaign_duration_minutes": session.get("campaign_duration_minutes"),
             "maximum_temperature_correction_f": session.get("maximum_temperature_correction_f"),
             "max_corrected_temperature_f": session.get("max_corrected_temperature_f"),

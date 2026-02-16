@@ -1,12 +1,14 @@
+import boto3
 import logging
 import os
 from quart import Quart, session
 from config import Config
-from routes.index import bp as index_bp
+from routes.main import main_bp as index_bp 
+from routes.campaigns import campaigns_bp
 import asyncio
 from quart_cors import cors
-
- 
+from routes.files import files_bp
+from routes.processing import processing_bp 
 
 
 
@@ -51,20 +53,24 @@ logger.addHandler(console_handler)
 #############################################################################
 
 # Initialize the Quart app
-app = Quart(__name__)
+
+app = Quart(__name__, 
+	template_folder="/home/ubuntu/AWS-server-for-mobile-sensors/templates",
+	static_folder  ="/home/ubuntu/AWS-server-for-mobile-sensors/static")
 app = cors(app, allow_origin="*")   # Allow all origins for CORS
 
 # Secret key for sessions (for development purposes only)
 app.secret_key = 'dons_secret-key'  # Set the secret key here
 
 # Load configuration from the Config class
+app.s3_client=boto3.client('s3')
 app.config.from_object(Config)
 
 # Register blueprints
 app.register_blueprint(index_bp)
-
-
-
+app.register_blueprint(files_bp)
+app.register_blueprint(campaigns_bp)
+app.register_blueprint(processing_bp)
 
 # Run the application (for development/testing only)
 

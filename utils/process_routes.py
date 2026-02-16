@@ -231,12 +231,9 @@ def mainProcessData(root_name,
         vmax=color_table_max
     )
     
-    colormap.caption = "Corrected Temperature (°F)"
+    colormap.caption = "Temperature (°F)"
     colormap.width  = 400   # px length
-    colormap.height = 40    # px thickness
-
-  
-    colormap.caption = "Corrected Temperature (°F)" 
+    colormap.height = 40    # px thickness 
     ########################################################
 
     logger.info("Creating Folium map with sensor data...")
@@ -255,19 +252,37 @@ def mainProcessData(root_name,
         control=True
     ).add_to(m)
 
-    #  Inject custom CSS to style the caption text:
-    m.get_root().html.add_child(folium.Element("""
+    #  Inject custom CSS to style the caption text and add drift correction info:
+    m.get_root().html.add_child(folium.Element(f"""
         <style>
         /* 
-            Branca’s colormap ends up in <div class="legend leaflet-control">, 
+            Branca's colormap ends up in <div class="legend leaflet-control">, 
             and the caption is rendered as an SVG <text> inside there. 
-            This selector bumps all <text> in that .legend up to 24px bold.
+            This selector bumps all <text> in that .legend up to 36px bold.
         */
-        .leaflet-control .legend text {
-            font-size: 24px !important;
+        .leaflet-control .legend text {{
+            font-size: 18px !important;
             font-weight: bold !important;
-        }
+        }}
+        /* Custom drift correction display */
+        .drift-correction {{
+            position: absolute;
+            top: 120px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 4px 6px;
+            border: 2px solid rgba(0,0,0,0.2);
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            z-index: 1000;
+        }}
         </style>
+        <div class="drift-correction">
+            Drift Correction: {temperature_drift_f * 3600:.3f} deg F/hour
+        </div>
     """))
 
     folium.TileLayer('OpenStreetMap', name='Standard Map').add_to(m)
