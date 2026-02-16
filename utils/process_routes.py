@@ -252,7 +252,7 @@ def mainProcessData(root_name,
         control=True
     ).add_to(m)
 
-    #  Inject custom CSS to style the caption text and add drift correction info:
+    #  Inject custom CSS to style the caption text and add parameter info:
     m.get_root().html.add_child(folium.Element(f"""
         <style>
         /* 
@@ -264,24 +264,79 @@ def mainProcessData(root_name,
             font-size: 18px !important;
             font-weight: bold !important;
         }}
-        /* Custom drift correction display */
-        .drift-correction {{
+        /* Custom parameter display */
+        .parameter-info {{
             position: absolute;
-            top: 120px;
+            top: 80px;
             right: 10px;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 4px 6px;
-            border: 2px solid rgba(0,0,0,0.2);
-            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 12px;
+            border: 2px solid rgba(0,0,0,0.3);
+            border-radius: 8px;
             font-family: Arial, sans-serif;
-            font-size: 16px;
-            font-weight: bold;
+            font-size: 12px;
             color: #333;
             z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            min-width: 200px;
+        }}
+        .parameter-info .title {{
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #0066cc;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 2px;
+        }}
+        .parameter-info .param-row {{
+            display: flex;
+            justify-content: space-between;
+            margin: 2px 0;
+            padding: 1px 0;
+        }}
+        .parameter-info .param-label {{
+            font-weight: bold;
+            color: #444;
+        }}
+        .parameter-info .param-value {{
+            color: #666;
+            text-align: right;
         }}
         </style>
-        <div class="drift-correction">
-            Drift Correction: {temperature_drift_f * 3600:.3f} deg F/hour
+        <div class="parameter-info">
+            <div class="title">Processing Parameters</div>
+            <div class="param-row">
+                <span class="param-label">Location:</span>
+                <span class="param-value">{bucket_name.replace('uhi-', '').replace('-', ' ').title()}</span>
+            </div>
+            <div class="param-row">
+                <span class="param-label">ID:</span>
+                <span class="param-value">{root_name}</span>
+            </div>
+            <div class="param-row">
+                <span class="param-label">Start trim:</span>
+                <span class="param-value">{start_time_adjustment_minutes:.1f} min</span>
+            </div>
+            <div class="param-row">
+                <span class="param-label">End trim:</span>
+                <span class="param-value">{end_time_adjustment_minutes:.1f} min</span>
+            </div>
+            <div class="param-row">
+                <span class="param-label">Cutoff:</span>
+                <span class="param-value">{cutoff_speed_MPH:.1f} MPH</span>
+            </div>
+            <div class="param-row">
+                <span class="param-label">Drift correction:</span>
+                <span class="param-value">{temperature_drift_f * 3600:.3f} °F/hr</span>
+            </div>
+            <div class="param-row">
+                <span class="param-label">Color min:</span>
+                <span class="param-value">{color_table_min_quantile}%</span>
+            </div>
+            <div class="param-row">
+                <span class="param-label">Color max:</span>
+                <span class="param-value">{color_table_max_quantile}%</span>
+            </div>
         </div>
     """))
 
