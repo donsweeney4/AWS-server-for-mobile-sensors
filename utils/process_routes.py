@@ -411,7 +411,7 @@ def mainProcessData(root_name,
     # ──────────── MODIFIED: move legend to lower‑left & control font size ────────────
     fig1.update_layout(
         title=dict(
-            text='Figure 1. Drift-Corrected Temperature over Time Window',
+            text='Sensor Temperatures over Accepted Time Window, includes drift correction, if any',
             font=dict(size=24),
             x=0.5,
             xanchor='center'
@@ -422,7 +422,7 @@ def mainProcessData(root_name,
             tickformat='%H:%M:%S'
         ),
         yaxis=dict(
-            title='Drift-Corrected Temperature (°F)',
+            title='Temperature (°F)',
             tickformat='.2f'
         ),
         legend_title_text='Sensor Files',
@@ -436,6 +436,29 @@ def mainProcessData(root_name,
             yanchor='bottom',
             font=dict(size=12)
         )
+    )
+    
+    # Add Processing Parameters panel as text annotation
+    parameters_text = f"""<b>Processing Parameters</b><br>
+Location: {bucket_name.replace('uhi-', '').replace('-', ' ').title()}<br>
+ID: {root_name}<br>
+Start trim: {start_time_adjustment_minutes:.1f} min<br>
+End trim: {end_time_adjustment_minutes:.1f} min<br>
+Cutoff: {cutoff_speed_MPH:.1f} MPH<br>
+Drift correction: {temperature_drift_f * 3600:.3f} °F/hr<br>
+Color min: {color_table_min_quantile}%<br>
+Color max: {color_table_max_quantile}%"""
+
+    fig1.add_annotation(
+        text=parameters_text,
+        xref="paper", yref="paper",
+        x=0.98, y=0.98,
+        xanchor="right", yanchor="top",
+        showarrow=False,
+        font=dict(size=11, color="black"),
+        bgcolor="rgba(255, 255, 255, 0.9)",
+        bordercolor="rgba(0, 0, 0, 0.3)",
+        borderwidth=2
     )
     # ────────────────────────────────────────────────────────────────────────────────
 
