@@ -39,6 +39,26 @@
       margin-top: 15px;
       font-weight: bold;
     }
+    
+    /* Processing indicator styles */
+    .processing-indicator {
+      display: none;
+      margin: 20px 0;
+      padding: 15px;
+      background-color: #ffa500;
+      color: white;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 5px;
+      animation: flash 1s infinite;
+      border: 2px solid #ff6600;
+    }
+    
+    @keyframes flash {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0.3; }
+    }
   </style>
 </head>
 <body>
@@ -145,7 +165,10 @@
 
   </form>
 
-
+  <!-- Processing indicator -->
+  <div id="processingIndicator" class="processing-indicator">
+    🔄 Processing data in backend... Please wait.
+  </div>
 
   <div id="statusMessage"></div> <div id="summarySection" style="display: none;">
   <h2>Processing Summary</h2>
@@ -202,9 +225,14 @@
 
     const feedback = document.getElementById("feedback");
     const statusMessage = document.getElementById("statusMessage");
+    const processingIndicator = document.getElementById("processingIndicator");
+    
     feedback.textContent = ""; // Clear previous feedback
-    statusMessage.textContent = "Processing...";
+    statusMessage.textContent = "";
     statusMessage.style.color = "black"; // Reset color
+    
+    // Show the flashing processing indicator
+    processingIndicator.style.display = "block";
 
     const speedStr = document.getElementById("cutoff_speed_MPH").value;
     const cutoff_speed = speedStr.trim() === "" ? null : parseFloat(speedStr);
@@ -213,6 +241,7 @@
       alert("❌ Please enter a valid Cutoff Speed (MPH).");
       statusMessage.textContent = "❌ Please enter a valid Cutoff Speed (MPH).";
       statusMessage.style.color = 'red';
+      processingIndicator.style.display = "none"; // Hide indicator on error
       return;
     }
 
@@ -236,6 +265,9 @@
       });
 
       const result = await response.json(); // Always parse JSON, whether success or error
+
+      // Hide the processing indicator when request completes (success or error)
+      processingIndicator.style.display = "none";
 
       if (response.ok) { // HTTP status is 2xx (Success)
         console.log("Processing successful:", result);
@@ -289,6 +321,7 @@
 
     } catch (error) {
       console.error("Network or unexpected error:", error);
+      processingIndicator.style.display = "none"; // Hide indicator on network error
       statusMessage.textContent = `A network or unexpected error occurred: ${error.message}`;
       statusMessage.style.color = 'red';
       document.getElementById("summarySection").style.display = "none"; // Hide summary on error
