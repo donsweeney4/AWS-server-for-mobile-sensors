@@ -255,9 +255,9 @@ def mainProcessData(root_name,
     #  Inject custom CSS to style the caption text and add parameter info:
     m.get_root().html.add_child(folium.Element(f"""
         <style>
-        /* 
-            Branca's colormap ends up in <div class="legend leaflet-control">, 
-            and the caption is rendered as an SVG <text> inside there. 
+        /*
+            Branca's colormap ends up in <div class="legend leaflet-control">,
+            and the caption is rendered as an SVG <text> inside there.
             This selector bumps all <text> in that .legend up to 36px bold.
         */
         .leaflet-control .legend text {{
@@ -302,8 +302,41 @@ def mainProcessData(root_name,
             color: #666;
             text-align: right;
         }}
+        .params-toggle-btn {{
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 4px 10px;
+            border: 2px solid rgba(0,0,0,0.3);
+            border-radius: 6px;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            font-weight: bold;
+            color: #0066cc;
+            z-index: 1001;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }}
+        .params-toggle-btn:hover {{
+            background: rgba(230, 240, 255, 0.98);
+        }}
         </style>
-        <div class="parameter-info">
+        <button class="params-toggle-btn" id="paramsToggleBtn" onclick="toggleParamInfo()">Hide Params</button>
+        <script>
+        function toggleParamInfo() {{
+            var panel = document.getElementById('paramInfoPanel');
+            var btn = document.getElementById('paramsToggleBtn');
+            if (panel.style.display === 'none') {{
+                panel.style.display = 'block';
+                btn.textContent = 'Hide Params';
+            }} else {{
+                panel.style.display = 'none';
+                btn.textContent = 'Show Params';
+            }}
+        }}
+        </script>
+        <div class="parameter-info" id="paramInfoPanel">
             <div class="title">Processing Parameters</div>
             <div class="param-row">
                 <span class="param-label">Location:</span>
@@ -449,7 +482,7 @@ Drift correction: {temperature_drift_f * 3600:.3f} °F/hr<br>
 Color min: {color_table_min_quantile}%<br>
 Color max: {color_table_max_quantile}%"""
 
-    fig1.add_annotation(
+    annotation_dict = dict(
         text=parameters_text,
         xref="paper", yref="paper",
         x=0.98, y=0.98,
@@ -459,6 +492,28 @@ Color max: {color_table_max_quantile}%"""
         bgcolor="rgba(255, 255, 255, 0.9)",
         bordercolor="rgba(0, 0, 0, 0.3)",
         borderwidth=2
+    )
+    fig1.add_annotation(**annotation_dict)
+
+    fig1.update_layout(
+        updatemenus=[
+            dict(
+                type="buttons",
+                showactive=True,
+                x=0.98,
+                y=0.76,
+                xanchor="right",
+                yanchor="top",
+                buttons=[
+                    dict(
+                        label="Toggle Params",
+                        method="relayout",
+                        args=[{"annotations": []}],
+                        args2=[{"annotations": [annotation_dict]}]
+                    ),
+                ]
+            )
+        ]
     )
     # ────────────────────────────────────────────────────────────────────────────────
 
