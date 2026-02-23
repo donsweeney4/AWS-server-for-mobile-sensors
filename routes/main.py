@@ -102,6 +102,13 @@ async def metadata():
     return await render_template("metadata.html")
 
 ##//#############################################################################
+@main_bp.route('/usersmanual')
+async def usersmanual():
+    """Renders the User's Manual page."""
+    logger.info("usersmanual route hit")
+    return await render_template("usersmanual.html")
+
+##//#############################################################################
 @main_bp.route('/arcgis')
 async def arcgis():
     """Renders the ArcGIS integration page."""
