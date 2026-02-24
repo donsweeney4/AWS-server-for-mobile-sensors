@@ -37,20 +37,21 @@
 
         .button-container {
             text-align: center; /* Center the buttons */
-            margin-bottom: 15px; /* Space below buttons */
+            margin-bottom: 10px; /* Space below buttons */
+            padding: 6px 0;
         }
 
         button {
             background-color: #007BFF; /* Bootstrap blue */
             color: yellow; /* High contrast for readability */
-            font-size: 1.1em; /* Slightly larger font */
+            font-size: 0.85em; /* Reduced by 4 points from original 1.1em */
             border: none;
-            padding: 10px 20px; /* Generous padding for easier clicking */
-            margin: 5px; /* Space between buttons */
+            padding: 7px 14px; /* Reduced padding to match smaller font */
+            margin: 4px; /* Space between buttons */
             cursor: pointer;
-            border-radius: 8px; /* More rounded corners */
+            border-radius: 6px; /* Slightly smaller corners */
             transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transitions */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
             font-weight: 700; /* Bold text */
         }
         
@@ -109,7 +110,8 @@
         <button id="campaignBtn" onclick="loadIframe('/campaign')" disabled>Select Campaign</button>
         <button id="processBtn" onclick="loadIframe('/renderprocessdata')" disabled>(Re)Process Sensor Data</button>
         <button id="heatmapBtn" onclick="loadIframe('/map')" disabled>Temperature Map by Route</button> 
-        <button id="tempPlotBtn" onclick="loadIframe('/temperatureplot')" disabled>Sensor Temperatures </button>
+        <button id="tempPlotBtn" onclick="loadIframe('/temperatureplot')" disabled>Sensor Temperatures</button>
+        <button id="advancedBtn" onclick="loadIframe('/advanced')" disabled>Advanced</button>
         <button id="metadataBtn" onclick="loadIframe('/metadata')" disabled>Metadata</button> <!-- Changed to loadIframe -->
         <button id="downloadBtn" onclick="loadIframe('/download-and-zip')" disabled>Download Campaign</button>
         <button id="manualBtn" onclick="window.open('https://docs.google.com/document/d/1SpkF4H2mIHgj6nMIVavMxqKRo78LIeTwOELwh8MliLA/edit?tab=t.0', '_blank')" style="background-color: yellow; color: blue;">User's Manual</button>
@@ -151,7 +153,8 @@
             document.getElementById('processBtn').disabled = false;
             document.getElementById('heatmapBtn').disabled = false;
             document.getElementById('tempPlotBtn').disabled = false;
-            document.getElementById('metadataBtn').disabled = false; // 
+            document.getElementById('advancedBtn').disabled = false;
+            document.getElementById('metadataBtn').disabled = false; //
             document.getElementById('downloadBtn').disabled = false;
             //document.getElementById('arcgisBtn').disabled = false; // Enable arcgis button
         }

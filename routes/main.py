@@ -102,11 +102,11 @@ async def metadata():
     return await render_template("metadata.html")
 
 ##//#############################################################################
-@main_bp.route('/usersmanual')
-async def usersmanual():
-    """Renders the User's Manual page."""
-    logger.info("usersmanual route hit")
-    return await render_template("usersmanual.html")
+@main_bp.route('/advanced')
+async def advanced():
+    """Renders the advanced page."""
+    logger.info("Advanced route hit")
+    return await render_template("advanced.html")
 
 ##//#############################################################################
 @main_bp.route('/arcgis')
