@@ -1,7 +1,9 @@
 # process_routes.py
 
 import io
+import os
 import re
+import shutil
 import pandas as pd
 import numpy as np
 import boto3
@@ -564,6 +566,15 @@ Color max: {color_table_max_quantile}%"""
     combined_csv = df_step5.to_csv(index=False)
 #SAVE df_step5
     save_to_s3(bucket_name, f"{root_name}_combined_data_with_corrections.csv", combined_csv)
+
+    local_dir = "./temporary_data"
+    if os.path.exists(local_dir):
+        shutil.rmtree(local_dir)
+    os.makedirs(local_dir)
+    local_csv_path = os.path.join(local_dir, f"{root_name}_combined_data_with_corrections.csv")
+    with open(local_csv_path, 'w') as f:
+        f.write(combined_csv)
+    logger.info(f"Saved combined CSV to local disk: {local_csv_path}")
 
                         #    reduced_df = df_step5[['Latitude', 'Longitude', 'Altitude (m)', 'corrected_temperature_f', 'Humidity (%)', 'SourceFile']]
                         #    reduced_csv = reduced_df.to_csv(index=False)
