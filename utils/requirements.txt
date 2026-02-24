@@ -1,0 +1,9 @@
+folium==0.20.0
+geopandas==1.1.1
+matplotlib==3.10.5
+numpy==2.3.2
+pandas==2.3.1
+plotly==6.2.0
+pyproj>=3.0.0
+scipy==1.16.1
+Shapely==2.1.1
