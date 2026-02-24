@@ -655,10 +655,11 @@ def save_contour_image(
         xs = mean_gdf_utm.geometry.x.values
         ys = mean_gdf_utm.geometry.y.values
     else:
-        # Use UTM centroids
+        # Use UTM centroids from the active UTM geometry
         valid_utm = subregion_gdf_utm.dropna(subset=['avg_temperature'])
-        xs = valid_utm['centroid'].apply(lambda p: p.x).astype(float).values
-        ys = valid_utm['centroid'].apply(lambda p: p.y).astype(float).values
+        utm_centroids = valid_utm.geometry.centroid
+        xs = utm_centroids.x.values
+        ys = utm_centroids.y.values
     
     xi = np.linspace(xs.min(), xs.max(), 400)
     yi = np.linspace(ys.min(), ys.max(), 400)
