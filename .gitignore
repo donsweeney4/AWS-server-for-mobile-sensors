@@ -1,11 +1,15 @@
-*.logs
-crontab.log
+
 *.tmp
 *.bak
 *.swp
 *.pid
-*.log
 *.cache
+*.png
+*.kml
+*.kmz
+utils/folium_geojson_only.html
+utils/folium_map.html
+temporary_data/*combined_data_with_corrections.csv
 # Ignore files with HOLD anywhere in the name (case-insensitive)
 *[Hh][Oo][Ll][Dd]*
 
