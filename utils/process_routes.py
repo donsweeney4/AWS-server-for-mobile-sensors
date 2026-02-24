@@ -378,17 +378,16 @@ def mainProcessData(root_name,
     logger.info(f"Adding sensor data to Folium map.solid_color: {solid_color}")
     #breakpoint()
 
-    for key in csv_keys:
+    for i, key in enumerate(csv_keys):
         group = folium.FeatureGroup(name=f"Sensor Data: {key}", show=True, overlay=True)
         df_key = df_step5[df_step5['SourceFile'] == key]
 
         logger.info(f"solid_color: {solid_color}")
-        i=1;
+        route_color = solid_color_list[i % len(solid_color_list)]
         for _, row in df_key.iterrows():
 
             if solid_color:
-                fill_color = solid_color_list[i % len(solid_color_list)]
-                #  logger.info(f"Using solid color: {fill_color} for row {i}")
+                fill_color = route_color
             else:
                 fill_color = colormap(row['corrected_temperature_f'])
 
@@ -418,7 +417,6 @@ def mainProcessData(root_name,
             ).add_to(group)
 
         group.add_to(m)
-        i += 1
 
     logger.info("Adding color map to Folium map...")
 
