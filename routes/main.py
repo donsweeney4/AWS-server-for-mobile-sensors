@@ -1,5 +1,7 @@
 import logging
+import os
 from quart import Blueprint, render_template, session, redirect, request, jsonify
+from quart import send_from_directory
 
 # Define blueprint
 main_bp = Blueprint('main', __name__)
@@ -108,6 +110,14 @@ async def advanced():
     """Renders the advanced page."""
     logger.info("Advanced route hit")
     return await render_template("advanced.html")
+
+##//#############################################################################
+TEMPORARY_OUTPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "temporary_output")
+
+@main_bp.route('/temporary_output/<path:filename>')
+async def temporary_output(filename):
+    """Serves files from the temporary_output directory."""
+    return await send_from_directory(TEMPORARY_OUTPUT_DIR, filename)
 
 ##//#############################################################################
 @main_bp.route('/arcgis')
