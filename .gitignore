@@ -22,3 +22,4 @@ temporary_data/*combined_data_with_corrections.csv
 *[Bb][Aa][Cc][Kk][Uu][Pp]*
 __pycache__/
 *.pyc
+temporary_output/

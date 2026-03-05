@@ -1,5 +1,8 @@
 import logging
 import asyncio
+import glob
+import os
+import subprocess
 from quart import Blueprint, jsonify, request, Response, session
 from utils.process_routes import mainProcessData # Assuming this is properly implemented
 
@@ -122,3 +125,49 @@ async def run_processing():
     except Exception as e:
         logger.exception("❌ Error during processing in /run_processing route")
         return jsonify({"status": "error", "message": "An unexpected error occurred during processing.", "details": str(e)}), 500
+
+
+##//#############################################################################
+## Route that runs the recursive subsampling script  ###########################
+
+@processing_bp.route('/run_subsampling', methods=['POST'])
+async def run_subsampling():
+    """
+    Finds the single CSV file in ./temporary_data/ and runs
+    Recursive_Sub_Sample_Script_V9.py with it as the --csv argument.
+    """
+    logger.info("📥 Received POST at /run_subsampling")
+
+    tmp_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'temporary_data')
+    csv_files = glob.glob(os.path.join(tmp_dir, '*.csv'))
+
+    if not csv_files:
+        return jsonify({"status": "error", "message": "No CSV file found in temporary_data/"}), 400
+    if len(csv_files) > 1:
+        return jsonify({"status": "error", "message": f"Multiple CSV files found in temporary_data/: {[os.path.basename(f) for f in csv_files]}"}), 400
+
+    csv_path = csv_files[0]
+    script_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'utils', 'Recursive_Sub_Sample_Script_V9.py')
+
+    logger.info(f"Running subsampling script with CSV: {csv_path}")
+
+    def run_script():
+        result = subprocess.run(
+            ['python3', script_path, '--csv', csv_path],
+            capture_output=True,
+            text=True,
+            cwd=os.path.dirname(os.path.dirname(__file__))
+        )
+        return result
+
+    try:
+        result = await asyncio.to_thread(run_script)
+        if result.returncode == 0:
+            logger.info("Subsampling script completed successfully")
+            return jsonify({"status": "ok", "message": "Subsampling completed successfully", "output": result.stdout})
+        else:
+            logger.error(f"Subsampling script failed: {result.stderr}")
+            return jsonify({"status": "error", "message": "Subsampling script failed", "details": result.stderr}), 500
+    except Exception as e:
+        logger.exception("❌ Error running subsampling script")
+        return jsonify({"status": "error", "message": "An unexpected error occurred", "details": str(e)}), 500

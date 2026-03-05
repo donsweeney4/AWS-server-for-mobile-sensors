@@ -92,7 +92,8 @@ async def location():
 @main_bp.route('/campaign')
 async def campaign():
     logger.info("Campaign route hit")
-    return await render_template("campaign.html")
+    selected_location_label = session.get('selected_location_label', '')
+    return await render_template("campaign.html", selected_location=selected_location_label)
  
 ##//#############################################################################
 @main_bp.route('/metadata')
@@ -126,10 +127,12 @@ async def store_selected_location():
     form_data = await request.form 
     logger.info(f"Form data received: {form_data}")
     selected_location = form_data.get('selected_location')
+    selected_location_label = form_data.get('selected_location_label', '')
 
     if selected_location:
         session['selected_location'] = selected_location
-        logger.info(f"Stored selected_location in session: {selected_location}")
+        session['selected_location_label'] = selected_location_label
+        logger.info(f"Stored selected_location in session: {selected_location}, label: {selected_location_label}")
         return redirect('/campaign')
     else:
         logger.warning("No location provided in form data.")

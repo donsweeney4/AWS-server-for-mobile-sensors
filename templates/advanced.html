@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <title>Advanced</title>
+    <title>Advanced Mapping: This is a work in progress</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
@@ -33,14 +33,64 @@
             color: #999;
             font-style: italic;
         }
+
+        .btn-run {
+            background-color: #2c3e50;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .btn-run:disabled {
+            background-color: #aaa;
+            cursor: not-allowed;
+        }
+
+        #subsampling-status {
+            margin-top: 12px;
+            font-size: 14px;
+        }
     </style>
 </head>
 
 <body>
-    <h2>Advanced</h2>
+    <h2>Advanced Mapping: This is a work in progress</h2>
 
     <div class="section">
-        <p class="placeholder">Advanced options and settings will appear here.</p>
+        <h3>Subsampling</h3>
+        <p>Run the recursive subsampling script on the current CSV in <code>temporary_data/</code>.</p>
+        <button class="btn-run" id="btn-subsample" onclick="runSubsampling()">Run Subsampling</button>
+        <div id="subsampling-status"></div>
     </div>
+
+    <script>
+        async function runSubsampling() {
+            const btn = document.getElementById('btn-subsample');
+            const status = document.getElementById('subsampling-status');
+            btn.disabled = true;
+            status.textContent = 'Running...';
+            status.style.color = '#555';
+
+            try {
+                const response = await fetch('/run_subsampling', { method: 'POST' });
+                const data = await response.json();
+                if (data.status === 'ok') {
+                    status.textContent = 'Completed successfully.';
+                    status.style.color = 'green';
+                } else {
+                    status.textContent = 'Error: ' + (data.message || 'Unknown error') + (data.details ? ' — ' + data.details : '');
+                    status.style.color = 'red';
+                }
+            } catch (err) {
+                status.textContent = 'Request failed: ' + err;
+                status.style.color = 'red';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
 </body>
 </html>

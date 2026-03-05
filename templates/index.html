@@ -106,12 +106,12 @@
     
     <div class="button-container">
         <!-- Buttons -->
-        <button id="locationBtn" onclick="handleLocation()">Location</button>
+        <button id="locationBtn" onclick="handleLocation()">Select Location</button>
         <button id="campaignBtn" onclick="loadIframe('/campaign')" disabled>Select Campaign</button>
         <button id="processBtn" onclick="loadIframe('/renderprocessdata')" disabled>(Re)Process Sensor Data</button>
-        <button id="heatmapBtn" onclick="loadIframe('/map')" disabled>Temperature Map by Route</button> 
+        <button id="heatmapBtn" onclick="loadIframe('/map')" disabled>Temperature Map by Route</button>
+        <button id="advancedBtn" onclick="loadIframe('/advanced')" disabled>Advanced Mapping</button>
         <button id="tempPlotBtn" onclick="loadIframe('/temperatureplot')" disabled>Sensor Temperatures</button>
-        <button id="advancedBtn" onclick="loadIframe('/advanced')" disabled>Advanced</button>
         <button id="metadataBtn" onclick="loadIframe('/metadata')" disabled>Metadata</button> <!-- Changed to loadIframe -->
         <button id="downloadBtn" onclick="loadIframe('/download-and-zip')" disabled>Download Campaign</button>
         <button id="manualBtn" onclick="window.open('https://docs.google.com/document/d/1SpkF4H2mIHgj6nMIVavMxqKRo78LIeTwOELwh8MliLA/edit?tab=t.0', '_blank')" style="background-color: yellow; color: blue;">User's Manual</button>

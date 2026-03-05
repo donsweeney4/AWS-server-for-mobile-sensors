@@ -39,6 +39,8 @@ from shapely.geometry import Point, Polygon
 from shapely.ops import unary_union
 from shapely.prepared import prep  # optional but recommended
 from scipy.interpolate import griddata
+from scipy.spatial import Delaunay as SpatialDelaunay
+import matplotlib.tri as mtri
 from pyproj import Transformer
 
 import folium
@@ -46,23 +48,38 @@ import branca.colormap as bcm
 from folium.raster_layers import ImageOverlay
 from folium.plugins import FastMarkerCluster
 
+# All generated output files are written here (root website dir / temporary_output)
+OUTPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "temporary_output")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
 
 # -------------------------------
 # Custom Matplotlib Colormap
 # -------------------------------
-def get_custom_cmap():
-    """Create a Matplotlib colormap using a high-contrast scheme."""
-    hex_colors = [
+COLOR_TABLES = {
+    1: [
+        "#0000FF",  # blue (low)
+        "#00FFFF",  # cyan
+        "#00FF00",  # green (mid)
+        "#FFFF00",  # yellow
+        "#FF0000",  # red (high)
+    ],
+    2: [
         "#0000FF",  # blue (low)
         "#0000FF",
         "#00FF00",  # green (mid)
         "#00FF00",
         "#FF0000",  # red (high)
         "#FF0000",
-    ]
+    ],
+}
+
+def get_custom_cmap(color_table: int = 1):
+    """Create a Matplotlib colormap from the selected color table."""
+    hex_colors = COLOR_TABLES[color_table]
     return LinearSegmentedColormap.from_list("high_contrast_temp", hex_colors, N=256)
 
-HIGH_CONTRAST_CMAP = get_custom_cmap()
+HIGH_CONTRAST_CMAP = get_custom_cmap(1)
 
 
 # -------------------------------
@@ -96,6 +113,7 @@ class BuildArtifacts:
     subregions: gpd.GeoDataFrame
     image_bounds: Optional[List[List[float]]] = None
     contour_png: Optional[str] = None
+    contour_png_unmasked: Optional[str] = None
 
 
 # -------------------------------
@@ -313,12 +331,11 @@ def add_centroids_wgs84(subregion_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 # Colors
 # -------------------------------
 def _safe_linear_colormap(vmin: float, vmax: float, reverse: bool = False):
+    # Sample colors from HIGH_CONTRAST_CMAP so Folium uses the same colormap
+    n_samples = 256
     colors = [
-        "#0000FF", "#0000FF",
-        "#0000FF", "#0000FF",
-        "#00FF00", "#00FF00",
-        "#FF0000", "#FF0000",
-         "#FF0000", "#FF0000",
+        "#{:02x}{:02x}{:02x}".format(int(r * 255), int(g * 255), int(b * 255))
+        for r, g, b, _a in (HIGH_CONTRAST_CMAP(i / (n_samples - 1)) for i in range(n_samples))
     ]
     if reverse:
         colors = list(reversed(colors))
@@ -456,8 +473,8 @@ def create_folium_map_with_layers(
         try:
             bounds, contour_png_path = save_contour_image(
                 subregion_gdf,
-                image_filename=centroid_contour_png,
-                output_dir='.',
+                image_filename=os.path.basename(centroid_contour_png),
+                output_dir=os.path.dirname(os.path.abspath(centroid_contour_png)),
                 no_borders=True
             )
             ImageOverlay(
@@ -498,7 +515,10 @@ def create_folium_map_with_layers(
 # -------------------------------
 # Static plotting (optional)
 # -------------------------------
-def plot_temperature_colored_subregions(subregion_gdf: gpd.GeoDataFrame, title: str = 'Temperature-Colored Subregions', no_borders: bool = True) -> None:
+
+# Static Plot 1 - Rectangles colored by average temperature (no borders)
+
+def plot_temperature_colored_subregions(subregion_gdf: gpd.GeoDataFrame, title: str = 'Static 1. SubregionTemperatures', no_borders: bool = True) -> None:
     fig, ax = plt.subplots(figsize=(10, 10))
     subregion_gdf.plot(
         ax=ax,
@@ -513,35 +533,30 @@ def plot_temperature_colored_subregions(subregion_gdf: gpd.GeoDataFrame, title: 
     ax.set_xlabel("Longitude")
     ax.set_ylabel("Latitude")
     ax.set_aspect("equal", adjustable="box")
-    plt.show()
+    plt.show(block=False)
 
+# Static Plot 2
 
-def plot_rectangles_and_contours(subregion_gdf: gpd.GeoDataFrame, title: str = 'Temperature Rectangles + Contour Overlay', no_borders: bool = True) -> None:
+def plot_rectangles_and_contours(subregion_gdf: gpd.GeoDataFrame, title: str = 'Static 2. Subregion Temperatures + Contour Overlay', no_borders: bool = True) -> None:
     valid = subregion_gdf.dropna(subset=['avg_temperature'])
-    
-    # Transform to UTM for accurate interpolation
+
+    # Compute Delaunay triangulation in UTM for geographic accuracy
     utm_crs = get_utm_crs(valid)
     valid_utm = valid.to_crs(utm_crs)
-    
-    # Get UTM centroids from the transformed polygon geometry
     utm_centroids = valid_utm.geometry.centroid
-    xs = utm_centroids.x.values
-    ys = utm_centroids.y.values
+    xs_utm = utm_centroids.x.values
+    ys_utm = utm_centroids.y.values
     temps = valid_utm['avg_temperature'].values
 
-    xi = np.linspace(xs.min(), xs.max(), 300)
-    yi = np.linspace(ys.min(), ys.max(), 300)
-    xi, yi = np.meshgrid(xi, yi)
+    tri = SpatialDelaunay(np.column_stack((xs_utm, ys_utm)))
 
-    # Use Delaunay triangulation interpolation
-    points = np.column_stack((xs, ys))
-    grid_points = np.column_stack((xi.ravel(), yi.ravel()))
-    zi_flat = delaunay_interpolate(points, temps, grid_points)
-    zi = zi_flat.reshape(xi.shape)
+    # Transform UTM centroids to WGS84 for plotting (avoids centroid-in-geographic-CRS warning)
+    wgs_centroids = utm_centroids.to_crs("EPSG:4326")
+    xs_wgs = wgs_centroids.x.values
+    ys_wgs = wgs_centroids.y.values
 
-    # Transform grid coordinates back to WGS84 for plotting
-    transformer = Transformer.from_crs(utm_crs, "EPSG:4326", always_xy=True)
-    xi_wgs, yi_wgs = transformer.transform(xi, yi)
+    # Build triangulation in WGS84 using triangle indices from UTM Delaunay
+    triang = mtri.Triangulation(xs_wgs, ys_wgs, triangles=tri.simplices)
 
     fig, ax = plt.subplots(figsize=(10, 10))
     subregion_gdf.plot(
@@ -549,50 +564,74 @@ def plot_rectangles_and_contours(subregion_gdf: gpd.GeoDataFrame, title: str = '
         linewidth=0 if no_borders else 0.5,
         edgecolor='none' if no_borders else 'black'
     )
-    contour = ax.contourf(xi_wgs, yi_wgs, zi, levels=20, cmap=HIGH_CONTRAST_CMAP, alpha=0.5)
+    contour = ax.tricontourf(triang, temps, levels=20, cmap=HIGH_CONTRAST_CMAP, alpha=0.5)
     plt.colorbar(contour, ax=ax, label='Avg Temperature (°F)')
     ax.set_title(title)
     ax.set_xlabel('Longitude')
     ax.set_ylabel('Latitude')
     ax.set_aspect('equal', adjustable='box')
-    plt.show()
+    plt.show( block=False  )
 
+# Static Plot 3 - Contour only (no rectangles, no borders)
 
-def plot_contour_only(subregion_gdf: gpd.GeoDataFrame, title: str = 'Temperature Contour Map (No Grid)') -> None:
+def plot_contour_only(subregion_gdf: gpd.GeoDataFrame, title: str = 'Static 3. Temperature Contour (No Subregions)') -> None:
     valid = subregion_gdf.dropna(subset=['avg_temperature'])
-    
-    # Transform to UTM for accurate interpolation
+
+    # Compute Delaunay triangulation in UTM for geographic accuracy
     utm_crs = get_utm_crs(valid)
     valid_utm = valid.to_crs(utm_crs)
-    
-    # Get UTM centroids from the transformed polygon geometry
     utm_centroids = valid_utm.geometry.centroid
-    xs = utm_centroids.x.values
-    ys = utm_centroids.y.values
+    xs_utm = utm_centroids.x.values
+    ys_utm = utm_centroids.y.values
     temps = valid_utm['avg_temperature'].values
 
-    xi = np.linspace(xs.min(), xs.max(), 300)
-    yi = np.linspace(ys.min(), ys.max(), 300)
-    xi, yi = np.meshgrid(xi, yi)
+    tri = SpatialDelaunay(np.column_stack((xs_utm, ys_utm)))
 
-    # Use Delaunay triangulation interpolation
-    points = np.column_stack((xs, ys))
-    grid_points = np.column_stack((xi.ravel(), yi.ravel()))
-    zi_flat = delaunay_interpolate(points, temps, grid_points)
-    zi = zi_flat.reshape(xi.shape)
+    # Transform UTM centroids to WGS84 for plotting (avoids centroid-in-geographic-CRS warning)
+    wgs_centroids = utm_centroids.to_crs("EPSG:4326")
+    xs_wgs = wgs_centroids.x.values
+    ys_wgs = wgs_centroids.y.values
 
-    # Transform grid coordinates back to WGS84 for plotting
-    transformer = Transformer.from_crs(utm_crs, "EPSG:4326", always_xy=True)
-    xi_wgs, yi_wgs = transformer.transform(xi, yi)
+    # Build triangulation in WGS84 using triangle indices from UTM Delaunay
+    triang = mtri.Triangulation(xs_wgs, ys_wgs, triangles=tri.simplices)
 
     fig, ax = plt.subplots(figsize=(10, 10))
-    contour = ax.contourf(xi_wgs, yi_wgs, zi, levels=20, cmap=HIGH_CONTRAST_CMAP)
+    contour = ax.tricontourf(triang, temps, levels=20, cmap=HIGH_CONTRAST_CMAP)
     plt.colorbar(contour, ax=ax, label="Avg Temperature (°F)")
     ax.set_title(title)
     ax.set_xlabel("Longitude")
     ax.set_ylabel("Latitude")
     ax.set_aspect("equal", adjustable="box")
-    plt.show()
+    plt.show(block=False)
+
+
+# Static Plot 4 - Delaunay triangulation diagnostic (centroids + triangle edges)
+
+def plot_delaunay_diagnostic(subregion_gdf: gpd.GeoDataFrame, title: str = 'Static 4. Delaunay Triangulation Diagnostic') -> None:
+    valid = subregion_gdf.dropna(subset=['avg_temperature'])
+
+    utm_crs = get_utm_crs(valid)
+    valid_utm = valid.to_crs(utm_crs)
+    utm_centroids = valid_utm.geometry.centroid
+    xs_utm = utm_centroids.x.values
+    ys_utm = utm_centroids.y.values
+
+    tri = SpatialDelaunay(np.column_stack((xs_utm, ys_utm)))
+
+    wgs_centroids = utm_centroids.to_crs("EPSG:4326")
+    xs_wgs = wgs_centroids.x.values
+    ys_wgs = wgs_centroids.y.values
+
+    triang = mtri.Triangulation(xs_wgs, ys_wgs, triangles=tri.simplices)
+
+    fig, ax = plt.subplots(figsize=(10, 10))
+    ax.triplot(triang, color='steelblue', linewidth=0.8)
+    ax.scatter(xs_wgs, ys_wgs, color='red', s=20, zorder=5)
+    ax.set_title(title)
+    ax.set_xlabel("Longitude")
+    ax.set_ylabel("Latitude")
+    ax.set_aspect("equal", adjustable="box")
+    plt.show(block=False)
 
 
 # -------------------------------
@@ -600,9 +639,10 @@ def plot_contour_only(subregion_gdf: gpd.GeoDataFrame, title: str = 'Temperature
 # -------------------------------
 def save_contour_image(
     subregion_gdf: gpd.GeoDataFrame,
-    image_filename: str = 'centroid_contour.png',
+    image_filename: str = 'contour_using_controids.png',
     output_dir: str = '.',
-    no_borders: bool = True
+    no_borders: bool = True,
+    apply_mask: bool = True,
 ) -> Tuple[List[List[float]], str]:
     """
     Save a transparent contour PNG clipped to kept subregions.
@@ -672,13 +712,16 @@ def save_contour_image(
     Z = Z_flat.reshape(X.shape)
 
     # --- mask void areas outside kept subregions (in UTM) ---
-    keep_union = unary_union(subregion_gdf_utm.geometry.values) if not subregion_gdf_utm.empty else None
-    if keep_union is not None and not keep_union.is_empty:
-        keep_prep = prep(keep_union)
-        pts = (Point(x, y) for x, y in zip(X.ravel(), Y.ravel()))
-        inside = np.fromiter((keep_prep.covers(p) for p in pts), dtype=bool, count=X.size).reshape(X.shape)
-        Z[~inside] = np.nan
-        print("✅ Applied transparent mask to void regions (outside kept subregions).")
+    if apply_mask:
+        keep_union = unary_union(subregion_gdf_utm.geometry.values) if not subregion_gdf_utm.empty else None
+        if keep_union is not None and not keep_union.is_empty:
+            keep_prep = prep(keep_union)
+            pts = (Point(x, y) for x, y in zip(X.ravel(), Y.ravel()))
+            inside = np.fromiter((keep_prep.covers(p) for p in pts), dtype=bool, count=X.size).reshape(X.shape)
+            Z[~inside] = np.nan
+            print("✅ Applied transparent mask to void regions (outside kept subregions).")
+    else:
+        print("✅ Skipping mask — interpolation shown over full convex hull.")
     
     # --- Transform grid coordinates back to WGS84 for plotting ---
     from pyproj import Transformer
@@ -741,27 +784,50 @@ def write_kml_ground_overlay(
     image_filename: str,
     bounds,
     kml_filename: str = "contour_overlay.kml",
-    name: str = "Contour Overlay"
+    name: str = "Masked (Data Areas Only)",
+    extra_overlays: Optional[List[Tuple[str, str]]] = None,
 ):
     """
     bounds = [[lat_min, lon_min], [lat_max, lon_max]]
+    extra_overlays: list of (image_filename, layer_name) for additional GroundOverlays.
+    When extra_overlays is provided, all overlays are wrapped in a KML Folder so
+    Google Earth Pro shows them as individually toggleable layers.
     """
     (lat_min, lon_min), (lat_max, lon_max) = bounds
 
+    def ground_overlay_xml(img_file: str, layer_name: str, visible: bool = True) -> str:
+        vis = 1 if visible else 0
+        return f"""    <GroundOverlay>
+      <name>{layer_name}</name>
+      <visibility>{vis}</visibility>
+      <Icon>
+        <href>{os.path.basename(img_file)}</href>
+      </Icon>
+      <LatLonBox>
+        <north>{lat_max}</north>
+        <south>{lat_min}</south>
+        <east>{lon_max}</east>
+        <west>{lon_min}</west>
+      </LatLonBox>
+    </GroundOverlay>"""
+
+    all_overlays = [(image_filename, name, True)] + [
+        (f, n, False) for f, n in (extra_overlays or [])
+    ]
+
+    if len(all_overlays) > 1:
+        overlay_blocks = "\n".join(ground_overlay_xml(f, n, v) for f, n, v in all_overlays)
+        body = f"""  <Folder>
+    <name>Contour Overlays</name>
+    <open>1</open>
+{overlay_blocks}
+  </Folder>"""
+    else:
+        body = ground_overlay_xml(image_filename, name, True)
+
     kml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
-  <GroundOverlay>
-    <name>{name}</name>
-    <Icon>
-      <href>{image_filename}</href>
-    </Icon>
-    <LatLonBox>
-      <north>{lat_max}</north>
-      <south>{lat_min}</south>
-      <east>{lon_max}</east>
-      <west>{lon_min}</west>
-    </LatLonBox>
-  </GroundOverlay>
+{body}
 </kml>
 """
 
@@ -770,12 +836,13 @@ def write_kml_ground_overlay(
 
     print(f"✅ Wrote KML overlay: {kml_filename}")
 
-    # Package KML + image into a KMZ (ZIP archive)
+    # Package KML + all images into a KMZ (ZIP archive)
     kmz_filename = kml_filename.replace(".kml", ".kmz")
     with zipfile.ZipFile(kmz_filename, "w", zipfile.ZIP_DEFLATED) as kmz:
         kmz.write(kml_filename, arcname=os.path.basename(kml_filename))
-        if os.path.exists(image_filename):
-            kmz.write(image_filename, arcname=os.path.basename(image_filename))
+        for img_file, _n, _v in all_overlays:
+            if os.path.exists(img_file):
+                kmz.write(img_file, arcname=os.path.basename(img_file))
     print(f"✅ Wrote KMZ overlay: {kmz_filename}")
 
 # -------------------------------
@@ -818,9 +885,8 @@ def build_pipeline(
     join_predicate: str = "intersects",
     output_centroids_csv: str = "output_centroids.csv",
     folium_html: str = "folium_geojson_only.html",
-    with_raster: bool = True,
     raster_png: str = "contour_overlay.png",
-    raster_html: str = "folium_map.html",
+    raster_png_unmasked: str = "contour_overlay_two.png",
     do_static_plots: bool = True,
     no_borders: bool = True,
     folium_output_fundamentals_csv: str = "folium_output_fundamentals.csv",
@@ -840,46 +906,48 @@ def build_pipeline(
     print(f"[DIAGNOSTIC] Raw point count: {len(gdf_points)}")
 
     subregions = add_centroids_wgs84(subregions)
-    write_fundamentals_csv(subregions, folium_output_fundamentals_csv)
+    write_fundamentals_csv(subregions, os.path.join(OUTPUT_DIR, os.path.basename(folium_output_fundamentals_csv)))
 
     # Centroids CSV
     out = subregions[['centroid', 'avg_temperature']].dropna().copy()
     out['longitude'] = out['centroid'].apply(lambda p: p.x)
     out['latitude'] = out['centroid'].apply(lambda p: p.y)
-    out[['longitude', 'latitude', 'avg_temperature']].to_csv(output_centroids_csv, index=False)
-    print(f"✅ Wrote centroids CSV: {output_centroids_csv}")
+    centroids_out_path = os.path.join(OUTPUT_DIR, os.path.basename(output_centroids_csv))
+    out[['longitude', 'latitude', 'avg_temperature']].to_csv(centroids_out_path, index=False)
+    print(f"✅ Wrote centroids CSV: {centroids_out_path}")
 
     # Folium vector map with contour + mask overlays
+    folium_html_path = os.path.join(OUTPUT_DIR, os.path.basename(folium_html))
     create_folium_map_with_layers(
         subregion_gdf=subregions,
-        output_html=folium_html,
+        output_html=folium_html_path,
         points_gdf=gdf_points,
         points_as_cluster=False,
         point_radius=2,
         add_centroid_contour=True,
-        centroid_contour_png="centroid_contour.png",
+        centroid_contour_png=os.path.join(OUTPUT_DIR, "centroid_contour.png"),
         centroid_contour_opacity=0.55,
         base_tiles="CartoDB dark_matter"
     )
-    print(f"✅ Wrote Folium map (GeoJSON): {folium_html}")
+    print(f"✅ Wrote Folium map (GeoJSON): {folium_html_path}")
 
-    image_bounds = None
-    if with_raster:
-        image_bounds, _mask = save_contour_image(subregions, image_filename=raster_png, output_dir=".", no_borders=no_borders)
-        create_folium_map_with_contour(raster_png, image_bounds, output_html=raster_html)
-        print(f"✅ Wrote Folium raster map: {raster_html}")
+    image_bounds, contour_png_path = save_contour_image(subregions, image_filename=raster_png, output_dir=OUTPUT_DIR, no_borders=no_borders, apply_mask=True)
+    _, contour_png_unmasked_path = save_contour_image(subregions, image_filename=raster_png_unmasked, output_dir=OUTPUT_DIR, no_borders=no_borders, apply_mask=False)
 
     # Optional static plots
     if do_static_plots:
         plot_temperature_colored_subregions(subregions, no_borders=no_borders)
         plot_rectangles_and_contours(subregions, no_borders=no_borders)
         plot_contour_only(subregions)
+        plot_delaunay_diagnostic(subregions)
+        plt.show()  # block until all plot windows are closed
 
     return BuildArtifacts(
         gdf_points=gdf_points,
         subregions=subregions,
         image_bounds=image_bounds,
-        contour_png=(raster_png if with_raster else None)
+        contour_png=contour_png_path,
+        contour_png_unmasked=contour_png_unmasked_path,
     )
 
 
@@ -894,12 +962,13 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--predicate", default="intersects", choices=["intersects", "within"], help="Spatial join predicate for points→polygons.")
     p.add_argument("--output-centroids", default="intermediate_centroids.csv", help="Output CSV for centroid long/lat and avg temperature.")
     p.add_argument("--folium-html", default="folium_geojson_only.html", help="Output HTML for Folium GeoJSON map.")
-    p.add_argument("--with-raster", action="store_true", help="Also render transparent contour PNG and a raster Folium map.")
-    p.add_argument("--raster-png", default="contour_overlay.png", help="Filename for saved transparent contour PNG.")
-    p.add_argument("--raster-html", default="folium_map.html", help="Output HTML for Folium raster map.")
+    p.add_argument("--raster-png", default="contour_overlay.png", help="Filename for masked contour PNG (data areas only).")
+    p.add_argument("--raster-png-unmasked", default="contour_overlay_two.png", help="Filename for unmasked contour PNG (full convex hull).")
     p.add_argument("--no-static-plots", action="store_true", help="Disable Matplotlib static plots.")
     p.add_argument("--no-borders", dest="no_borders", action="store_true", default=True, help="Hide rectangle borders in static plots (default).")
     p.add_argument("--show-borders", dest="no_borders", action="store_false", help="Show rectangle borders in static plots.")
+    p.add_argument("--color-table", type=int, default=1, choices=[1, 2],
+                   help="Color table to use: 1 = blue-cyan-green-yellow-red (default), 2 = blue-green-red.")
     p.add_argument("--folium-output-fundamentals", default="folium_output_fundamentals.csv",
                    help="Output CSV of per-subregion fundamentals for ArcGIS "
                         "(avg_lat, avg_lon, average_temperature_F, standard_deviation_F, number_of_data_points).")
@@ -907,7 +976,9 @@ def _parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    global HIGH_CONTRAST_CMAP
     args = _parse_args()
+    HIGH_CONTRAST_CMAP = get_custom_cmap(args.color_table)
 
     artifacts = build_pipeline(
         csv_path=args.csv_path,
@@ -916,30 +987,18 @@ def main() -> None:
         join_predicate=args.predicate,
         output_centroids_csv=args.output_centroids,
         folium_html=args.folium_html,
-        with_raster=args.with_raster,
         raster_png=args.raster_png,
-        raster_html=args.raster_html,
+        raster_png_unmasked=args.raster_png_unmasked,
         do_static_plots=not args.no_static_plots,
         no_borders=args.no_borders,
         folium_output_fundamentals_csv=args.folium_output_fundamentals,
     )
 
-    # Prefer bounds already computed during the pipeline (if with_raster was enabled)
-    image_bounds = artifacts.image_bounds
-
-    # If with_raster was not enabled, generate the contour image now
-    if image_bounds is None:
-        image_bounds, _ = save_contour_image(
-            artifacts.subregions,
-            image_filename="contour_overlay.png",
-            output_dir=".",
-            no_borders=args.no_borders
-        )
-
     write_kml_ground_overlay(
-        image_filename="contour_overlay.png",
-        bounds=image_bounds,
-        kml_filename="contour_overlay.kml"
+        image_filename=artifacts.contour_png,
+        bounds=artifacts.image_bounds,
+        kml_filename=os.path.join(OUTPUT_DIR, "contour_overlay.kml"),
+        extra_overlays=[(artifacts.contour_png_unmasked, "Full Convex Hull")],
     )
 
 
