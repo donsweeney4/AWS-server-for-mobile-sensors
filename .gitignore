@@ -23,3 +23,4 @@ temporary_data/*combined_data_with_corrections.csv
 __pycache__/
 *.pyc
 temporary_output/
+venv/
