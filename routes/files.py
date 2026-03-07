@@ -5,7 +5,7 @@ import json
 import logging
 import asyncio
 import re
-from quart import Blueprint, jsonify, request, Response, session, send_file, current_app
+from quart import Blueprint, jsonify, request, Response, session, send_file, render_template, current_app
 from botocore.exceptions import ClientError
 
 # Define blueprint
@@ -238,6 +238,12 @@ async def get_locations():
    
 ##//#############################################################################
 @files_bp.route('/download-and-zip')
+async def download_page():
+    """Renders the Download Campaign page."""
+    return await render_template('download.html')
+
+
+@files_bp.route('/download-zip')
 async def download_and_zip_files():
     """
     Endpoint to download, zip, and serve files from S3 based on a common root name.

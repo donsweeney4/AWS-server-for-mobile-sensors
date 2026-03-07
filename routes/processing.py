@@ -138,7 +138,8 @@ async def run_subsampling():
     """
     logger.info("📥 Received POST at /run_subsampling")
 
-    tmp_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'temporary_data')
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    tmp_dir = os.path.join(base_dir, 'temporary_data')
     csv_files = glob.glob(os.path.join(tmp_dir, '*.csv'))
 
     if not csv_files:
@@ -147,16 +148,40 @@ async def run_subsampling():
         return jsonify({"status": "error", "message": f"Multiple CSV files found in temporary_data/: {[os.path.basename(f) for f in csv_files]}"}), 400
 
     csv_path = csv_files[0]
-    script_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'utils', 'Recursive_Sub_Sample_Script_V9.py')
+    script_path = os.path.join(base_dir, 'utils', 'Recursive_Sub_Sample_Script_V9.py')
 
-    logger.info(f"Running subsampling script with CSV: {csv_path}")
+    # Read optional parameters from request body
+    params = {}
+    try:
+        body = await request.get_json(silent=True)
+        if body:
+            params = body
+    except Exception:
+        pass
+
+    cmd = ['python3', script_path, '--csv', csv_path]
+
+    if 'min_samples' in params:
+        cmd += ['--min-samples', str(int(params['min_samples']))]
+    if 'min_cell_samples' in params:
+        cmd += ['--min-cell-samples', str(int(params['min_cell_samples']))]
+    if 'predicate' in params and params['predicate'] in ('intersects', 'within'):
+        cmd += ['--predicate', params['predicate']]
+    if 'color_table' in params:
+        cmd += ['--color-table', str(int(params['color_table']))]
+    if params.get('show_borders'):
+        cmd += ['--show-borders']
+    if params.get('no_static_plots'):
+        cmd += ['--no-static-plots']
+
+    logger.info(f"Running subsampling script: {' '.join(cmd)}")
 
     def run_script():
         result = subprocess.run(
-            ['python3', script_path, '--csv', csv_path],
+            cmd,
             capture_output=True,
             text=True,
-            cwd=os.path.dirname(os.path.dirname(__file__))
+            cwd=base_dir
         )
         return result
 

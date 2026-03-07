@@ -76,6 +76,58 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead th {
+            background-color: #2c3e50;
+            color: #fff;
+            padding: 10px 12px;
+            text-align: left;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f7f9fb;
+        }
+
+        tbody td {
+            padding: 9px 12px;
+            vertical-align: middle;
+            border-bottom: 1px solid #e0e6ec;
+        }
+
+        tbody td:first-child {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 13px;
+            color: #1a6bbf;
+            white-space: nowrap;
+        }
+
+        tbody td.default-val {
+            color: #666;
+            font-size: 13px;
+        }
+
+        input[type="number"],
+        select {
+            width: 120px;
+            padding: 5px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #1a6bbf;
+            box-shadow: 0 0 0 2px rgba(26, 107, 191, 0.2);
+        }
     </style>
 </head>
 
@@ -83,43 +135,124 @@
     <h2>Advanced Mapping: This is a work in progress</h2>
 
     <div class="section">
-        <h3>Subsampling and Contouring</h3>
-        <p>Step 1. Run the recursive subsampling and contouring script.</p>
-        <button class="btn-run" id="btn-subsample" onclick="runSubsampling()" style="background-color:#1a6bbf;color:#FFD700;">Run Advanced Mapping</button>
+        <h3>Custom Mapping Parameters</h3>
+        <p>Set parameters for the recursive subsampling and contouring script. Default values are pre-filled. Change any value you want, then click <strong>Run with These Parameters</strong>.</p>
+
+        <table id="params-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Description</th>
+                    <th>Default</th>
+                    <th>Your Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>--min-samples</td>
+                    <td>Minimum number of data points in a region before it is subdivided further.</td>
+                    <td class="default-val">10</td>
+                    <td><input type="number" id="min_samples" value="10" min="1" step="1"></td>
+                </tr>
+                <tr>
+                    <td>--min-cell-samples</td>
+                    <td>Minimum number of data points required to keep a subregion cell. Cells below this are discarded.</td>
+                    <td class="default-val">4</td>
+                    <td><input type="number" id="min_cell_samples" value="4" min="1" step="1"></td>
+                </tr>
+                <tr>
+                    <td>--predicate</td>
+                    <td>Spatial join method used to assign points to polygons.</td>
+                    <td class="default-val">intersects</td>
+                    <td>
+                        <select id="predicate">
+                            <option value="intersects" selected>intersects</option>
+                            <option value="within">within</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>--color-table</td>
+                    <td>Color scheme for the temperature map. 1 = blue-cyan-green-yellow-red. 2 = blue-green-red.</td>
+                    <td class="default-val">1</td>
+                    <td>
+                        <select id="color_table">
+                            <option value="1" selected>1 (blue to red)</option>
+                            <option value="2">2 (blue-green-red)</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>--show-borders</td>
+                    <td>Show rectangle borders on the static plots and contour image. Default is borders off.</td>
+                    <td class="default-val">off (no borders)</td>
+                    <td>
+                        <select id="show_borders">
+                            <option value="no" selected>No borders (default)</option>
+                            <option value="yes">Show borders</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>--no-static-plots</td>
+                    <td>Whether to generate static Matplotlib plots (Static 1-4). Disable to skip and run faster.</td>
+                    <td class="default-val">enabled</td>
+                    <td>
+                        <select id="static_plots">
+                            <option value="yes" selected>Enabled (default)</option>
+                            <option value="no">Disabled (faster)</option>
+                        </select>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <br>
+        <button class="btn-run" id="btn-subsample" onclick="runSubsampling()" style="background-color:#1a6bbf;color:#FFD700;">Run with These Parameters</button>
+        <button class="btn-run" onclick="resetDefaults()" style="background-color:#6c757d;margin-left:10px;">Reset to Defaults</button>
         <div id="subsampling-status"></div>
     </div>
 
     <div class="section">
         <p>The primary output files are the .kmz file and the .html file, both below.  You can view the .html file directly in your browser.  The .kmz file is for Google Earth Pro, a free application you need to install on your computer.  Download the .kmz file and just select it.  That will automatically open Google Earth Pro and display the results.</p>
         <a href="/temporary_output/contour_overlay.kmz" download class="output-links" style="display:inline-block;margin:0 10px 0 0;padding:8px 14px;background-color:#2c3e50;color:#fff;border-radius:5px;text-decoration:none;font-size:14px;">Download .kmz File for Google Earth</a>
-        <a href="/temporary_output/folium_geojson_only.html" target="_blank" style="display:inline-block;margin:0;padding:8px 14px;background-color:#2c3e50;color:#fff;border-radius:5px;text-decoration:none;font-size:14px;">Folium Map (HTML)</a>
+        <a href="/temporary_output/folium_geojson_only.html" target="_blank" style="display:inline-block;margin:0;padding:8px 14px;background-color:#2c3e50;color:#fff;border-radius:5px;text-decoration:none;font-size:14px;">View Folium Map (html)</a>
     </div>
 
     <div class="section">
         <h3>Other Output Files</h3>
-        <p>Files generated by the last subsampling run. Links open in a new tab; images are previewed below.</p>
 
         <div class="output-links">
             <a href="/temporary_output/contour_overlay.png" target="_blank">Contour Overlay (masked)</a>
             <a href="/temporary_output/contour_overlay_two.png" target="_blank">Contour Overlay (unmasked)</a>
             <a href="/temporary_output/centroid_contour.png" target="_blank">Centroid Contour</a>
         </div>
-
-        <img src="/temporary_output/contour_overlay.png" alt="Contour Overlay (masked)" style="margin-top:16px;">
-        <img src="/temporary_output/contour_overlay_two.png" alt="Contour Overlay (unmasked)">
-        <img src="/temporary_output/centroid_contour.png" alt="Centroid Contour">
     </div>
 
     <script>
         async function runSubsampling() {
             const btn = document.getElementById('btn-subsample');
             const status = document.getElementById('subsampling-status');
+
+            const params = {
+                min_samples:      parseInt(document.getElementById('min_samples').value, 10),
+                min_cell_samples: parseInt(document.getElementById('min_cell_samples').value, 10),
+                predicate:        document.getElementById('predicate').value,
+                color_table:      parseInt(document.getElementById('color_table').value, 10),
+                show_borders:     document.getElementById('show_borders').value === 'yes',
+                no_static_plots:  document.getElementById('static_plots').value === 'no',
+            };
+
             btn.disabled = true;
-            status.textContent = 'Running...';
+            status.textContent = 'Running... this may take a minute.';
             status.style.color = '#555';
 
             try {
-                const response = await fetch('/run_subsampling', { method: 'POST' });
+                const response = await fetch('/run_subsampling', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
                 const data = await response.json();
                 if (data.status === 'ok') {
                     status.textContent = 'Completed successfully.';
@@ -134,6 +267,15 @@
             } finally {
                 btn.disabled = false;
             }
+        }
+
+        function resetDefaults() {
+            document.getElementById('min_samples').value = 10;
+            document.getElementById('min_cell_samples').value = 4;
+            document.getElementById('predicate').value = 'intersects';
+            document.getElementById('color_table').value = '1';
+            document.getElementById('show_borders').value = 'no';
+            document.getElementById('static_plots').value = 'yes';
         }
     </script>
 </body>

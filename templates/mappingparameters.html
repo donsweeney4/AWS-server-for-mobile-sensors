@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Custom Mapping Parameters</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f0f4f8;
+            color: #333;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .tab-bar {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            padding: 9px 18px;
+            border-radius: 6px 6px 0 0;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            background-color: #d0d8e0;
+            color: #2c3e50;
+            border-bottom: 3px solid transparent;
+            transition: background-color 0.15s;
+        }
+
+        .tab:hover {
+            background-color: #b8c4cf;
+        }
+
+        .tab.active {
+            background-color: #2c3e50;
+            color: #FFD700;
+            border-bottom: 3px solid #1a6bbf;
+        }
+
+        .section {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead th {
+            background-color: #2c3e50;
+            color: #fff;
+            padding: 10px 12px;
+            text-align: left;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f7f9fb;
+        }
+
+        tbody td {
+            padding: 9px 12px;
+            vertical-align: middle;
+            border-bottom: 1px solid #e0e6ec;
+        }
+
+        tbody td:first-child {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 13px;
+            color: #1a6bbf;
+            white-space: nowrap;
+        }
+
+        tbody td.default-val {
+            color: #666;
+            font-size: 13px;
+        }
+
+        input[type="number"],
+        select {
+            width: 120px;
+            padding: 5px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #1a6bbf;
+            box-shadow: 0 0 0 2px rgba(26, 107, 191, 0.2);
+        }
+
+        .btn-run {
+            background-color: #1a6bbf;
+            color: #FFD700;
+            border: none;
+            border-radius: 6px;
+            padding: 11px 26px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .btn-run:disabled {
+            background-color: #aaa;
+            color: #fff;
+            cursor: not-allowed;
+        }
+
+        .btn-reset {
+            background-color: #6c757d;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 11px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 8px;
+            margin-left: 10px;
+        }
+
+        .btn-reset:hover {
+            background-color: #5a6268;
+        }
+
+        #run-status {
+            margin-top: 14px;
+            font-size: 14px;
+        }
+
+        .note {
+            color: #666;
+            font-size: 13px;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Advanced Mapping</h2>
+
+    <div class="tab-bar">
+        <a href="/advanced" class="tab">Advanced Mapping</a>
+        <a href="/mappingparameters" class="tab active">Custom Mapping Parameters</a>
+    </div>
+
+    <div class="section">
+        <h3>Custom Mapping Parameters</h3>
+        <p>Set parameters for the recursive subsampling and contouring script. Default values are pre-filled. Change any value you want, then click <strong>Run with These Parameters</strong>.</p>
+
+        <table id="params-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Description</th>
+                    <th>Default</th>
+                    <th>Your Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>--min-samples</td>
+                    <td>Minimum number of data points in a region before it is subdivided further.</td>
+                    <td class="default-val">10</td>
+                    <td><input type="number" id="min_samples" value="10" min="1" step="1"></td>
+                </tr>
+                <tr>
+                    <td>--min-cell-samples</td>
+                    <td>Minimum number of data points required to keep a subregion cell. Cells below this are discarded.</td>
+                    <td class="default-val">4</td>
+                    <td><input type="number" id="min_cell_samples" value="4" min="1" step="1"></td>
+                </tr>
+                <tr>
+                    <td>--predicate</td>
+                    <td>Spatial join method used to assign points to polygons.</td>
+                    <td class="default-val">intersects</td>
+                    <td>
+                        <select id="predicate">
+                            <option value="intersects" selected>intersects</option>
+                            <option value="within">within</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>--color-table</td>
+                    <td>Color scheme for the temperature map. 1 = blue-cyan-green-yellow-red. 2 = blue-green-red.</td>
+                    <td class="default-val">1</td>
+                    <td>
+                        <select id="color_table">
+                            <option value="1" selected>1 (blue to red)</option>
+                            <option value="2">2 (blue-green-red)</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>--show-borders</td>
+                    <td>Show rectangle borders on the static plots and contour image. Default is borders off.</td>
+                    <td class="default-val">off (no borders)</td>
+                    <td>
+                        <select id="show_borders">
+                            <option value="no" selected>No borders (default)</option>
+                            <option value="yes">Show borders</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>--no-static-plots</td>
+                    <td>Whether to generate static Matplotlib plots (Static 1-4). Disable to skip and run faster.</td>
+                    <td class="default-val">enabled</td>
+                    <td>
+                        <select id="static_plots">
+                            <option value="yes" selected>Enabled (default)</option>
+                            <option value="no">Disabled (faster)</option>
+                        </select>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <br>
+        <button class="btn-run" id="btn-run" onclick="runWithParams()">Run with These Parameters</button>
+        <button class="btn-reset" onclick="resetDefaults()">Reset to Defaults</button>
+        <div id="run-status"></div>
+    </div>
+
+    <div class="section">
+        <p class="note">
+            The input CSV file is detected automatically from the <code>temporary_data/</code> folder.
+            Output files are written to <code>temporary_output/</code> and can be viewed on the
+            <a href="/advanced">Advanced Mapping</a> page after the run completes.
+        </p>
+    </div>
+
+    <script>
+        async function runWithParams() {
+            const btn = document.getElementById('btn-run');
+            const status = document.getElementById('run-status');
+
+            const params = {
+                min_samples:      parseInt(document.getElementById('min_samples').value, 10),
+                min_cell_samples: parseInt(document.getElementById('min_cell_samples').value, 10),
+                predicate:        document.getElementById('predicate').value,
+                color_table:      parseInt(document.getElementById('color_table').value, 10),
+                show_borders:     document.getElementById('show_borders').value === 'yes',
+                no_static_plots:  document.getElementById('static_plots').value === 'no',
+            };
+
+            btn.disabled = true;
+            status.textContent = 'Running... this may take a minute.';
+            status.style.color = '#555';
+
+            try {
+                const response = await fetch('/run_subsampling', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                const data = await response.json();
+                if (data.status === 'ok') {
+                    status.textContent = 'Completed successfully. View results on the Advanced Mapping page.';
+                    status.style.color = 'green';
+                } else {
+                    status.textContent = 'Error: ' + (data.message || 'Unknown error') +
+                        (data.details ? ' — ' + data.details : '');
+                    status.style.color = 'red';
+                }
+            } catch (err) {
+                status.textContent = 'Request failed: ' + err;
+                status.style.color = 'red';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function resetDefaults() {
+            document.getElementById('min_samples').value = 10;
+            document.getElementById('min_cell_samples').value = 4;
+            document.getElementById('predicate').value = 'intersects';
+            document.getElementById('color_table').value = '1';
+            document.getElementById('show_borders').value = 'no';
+            document.getElementById('static_plots').value = 'yes';
+        }
+    </script>
+</body>
+</html>

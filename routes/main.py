@@ -112,12 +112,22 @@ async def advanced():
     return await render_template("advanced.html")
 
 ##//#############################################################################
+@main_bp.route('/mappingparameters')
+async def mappingparameters():
+    """Renders the custom mapping parameters page."""
+    logger.info("Mapping parameters route hit")
+    return await render_template("mappingparameters.html")
+
+##//#############################################################################
 TEMPORARY_OUTPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "temporary_output")
 
 @main_bp.route('/temporary_output/<path:filename>')
 async def temporary_output(filename):
     """Serves files from the temporary_output directory."""
-    return await send_from_directory(TEMPORARY_OUTPUT_DIR, filename)
+    response = await send_from_directory(TEMPORARY_OUTPUT_DIR, filename)
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    return response
 
 ##//#############################################################################
 @main_bp.route('/arcgis')
