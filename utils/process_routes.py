@@ -75,7 +75,7 @@ def mainProcessData(root_name,
                     bucket_name,
                     start_time_adjustment_minutes=0.0,
                     end_time_adjustment_minutes=0.0,
-                    cutoff_speed_MPH=1.0,
+                    cutoff_speed_MPH=0.0,
                     slope_option=1,
                     temperature_drift_f=0.0,
                     color_table_min_quantile=5,
@@ -607,7 +607,7 @@ if __name__ == "__main__":
     parser.add_argument('bucket_name',  help='Required S3 bucket name')
     parser.add_argument('--start_time_adjustment_minutes', type=float, default=1.0)
     parser.add_argument('--end_time_adjustment_minutes', type=float, default=1.0)
-    parser.add_argument('--cutoff_speed_MPH', type=float, default=1.0)
+    parser.add_argument('--cutoff_speed_MPH', type=float, default=0.0)
     parser.add_argument('--slope_option',type=int,default=1)
     parser.add_argument('--temperature_drift_f', type=float, default=0.0)
     parser.add_argument('--color_table_min_quantile', type=int, default=5)
