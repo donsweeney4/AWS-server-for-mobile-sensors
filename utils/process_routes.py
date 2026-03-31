@@ -3,6 +3,7 @@
 import io
 import os
 import re
+import json
 import shutil
 import pandas as pd
 import numpy as np
@@ -495,36 +496,61 @@ Color max: {color_table_max_quantile}%"""
     )
     fig1.add_annotation(**annotation_dict)
 
-    fig1.update_layout(
-        updatemenus=[
-            dict(
-                type="buttons",
-                showactive=True,
-                x=0.98,
-                y=0.76,
-                xanchor="right",
-                yanchor="top",
-                buttons=[
-                    dict(
-                        label="Toggle Params",
-                        method="relayout",
-                        args=[{"annotations": []}],
-                        args2=[{"annotations": [annotation_dict]}]
-                    ),
-                ]
-            )
-        ]
-    )
     # ────────────────────────────────────────────────────────────────────────────────
 
     fig1.update_traces(mode='lines+markers', marker=dict(size=4, line=dict(width=1, color='DarkSlateGrey')))
+
+    fig1_div_id = 'fig1_plot'
     html_buf1 = io.StringIO()
-    pio.write_html(fig1, file=html_buf1, auto_open=False)
+    pio.write_html(fig1, file=html_buf1, auto_open=False, div_id=fig1_div_id)
+    html_content1 = html_buf1.getvalue()
+    html_buf1.close()
+
+    annotation_json = json.dumps(annotation_dict)
+    hide_params_inject = f"""<style>
+    .params-toggle-btn-fig1 {{
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 4px 10px;
+        border: 2px solid rgba(0,0,0,0.3);
+        border-radius: 6px;
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        font-weight: bold;
+        color: #0066cc;
+        z-index: 1001;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }}
+    .params-toggle-btn-fig1:hover {{
+        background: rgba(230, 240, 255, 0.98);
+    }}
+    </style>
+    <button class="params-toggle-btn-fig1" id="paramsToggleBtnFig1" onclick="toggleParamInfoFig1()">Hide Params</button>
+    <script>
+    var paramsVisibleFig1 = true;
+    var annotationDataFig1 = {annotation_json};
+    function toggleParamInfoFig1() {{
+        var btn = document.getElementById('paramsToggleBtnFig1');
+        if (paramsVisibleFig1) {{
+            Plotly.relayout('{fig1_div_id}', {{'annotations': []}});
+            btn.textContent = 'Show Params';
+            paramsVisibleFig1 = false;
+        }} else {{
+            Plotly.relayout('{fig1_div_id}', {{'annotations': [annotationDataFig1]}});
+            btn.textContent = 'Hide Params';
+            paramsVisibleFig1 = true;
+        }}
+    }}
+    </script>
+    """
+    html_content1 = html_content1.replace('</body>', hide_params_inject + '</body>')
 
     fig1_filename = f"{root_name}_{'fig1_corrected_temperature_map_time_window'}.html"
     logger.info(f"Saving HTML figure to S3: {fig1_filename}")
-    save_to_s3(bucket_name, fig1_filename, html_buf1.getvalue())
-    html_buf1.close()
+    save_to_s3(bucket_name, fig1_filename, html_content1)
 
     #####################################################################
     # Figure 2 — Temperature over time

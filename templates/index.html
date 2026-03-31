@@ -345,14 +345,14 @@
     </header>
 
     <!-- ─── TOOLBAR ─── -->
-    <div class="toolbar">
+    <div class="toolbar">c
         <span class="toolbar-label">Tools →</span>
 
         <button id="locationBtn" onclick="handleLocation()">⌖ Select Location</button>
         <button id="campaignBtn" onclick="loadIframe('/campaign')" disabled>⊞ Campaign</button>
         <button id="processBtn" onclick="loadIframe('/renderprocessdata')" disabled>⟳ Process Data</button>
         <button id="heatmapBtn" onclick="loadIframe('/map')" disabled>⬡ Temp Map</button>
-        <button id="advancedBtn" onclick="loadIframe('/advanced')" disabled>◈ Advanced Map</button>
+        <button id="specialProjectsBtn" onclick="loadIframe('/specialprojects')" disabled>✦ Special Projects</button>
         <button id="tempPlotBtn" onclick="loadIframe('/temperatureplot')" disabled>〜 Sensor Temps</button>
         <button id="metadataBtn" onclick="loadIframe('/metadata')" disabled>≡ Metadata</button>
         <button id="downloadBtn" onclick="loadIframe('/download-and-zip')" disabled>↓ Download</button>
@@ -398,7 +398,7 @@
         function handleLocation() {
             loadIframe('/location');
             ['campaignBtn','processBtn','heatmapBtn','tempPlotBtn',
-             'advancedBtn','metadataBtn','downloadBtn'].forEach(id => {
+             'specialProjectsBtn','metadataBtn','downloadBtn'].forEach(id => {
                 document.getElementById(id).disabled = false;
             });
         }

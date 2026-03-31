@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="{{ url_for('static', filename='js/error-logger.js') }}"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Special Projects</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      color: #333;
+    }
+    h1 {
+      color: #0066cc;
+      border-bottom: 2px solid #0066cc;
+      padding-bottom: 8px;
+    }
+    h2 {
+      color: #444;
+      margin-top: 30px;
+    }
+    p {
+      line-height: 1.7;
+      max-width: 800px;
+    }
+    .placeholder-card {
+      background: #f2f2f2;
+      border: 2px solid #aaa;
+      border-radius: 8px;
+      padding: 20px 28px;
+      margin: 20px 0;
+      max-width: 800px;
+    }
+    .placeholder-card h3 {
+      margin-top: 0;
+      color: #0066cc;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Special Projects</h1>
+
+  <p>
+    Special Projects provides a dedicated space for collaborative efforts, one-off analyses,
+    and advanced investigations that fall outside the standard data collection and mapping
+    workflow. Teams may use this area to share findings, host custom visualizations, or
+    link to external tools and datasets.
+  </p>
+
+  <div class="placeholder-card">
+    <h3>Project 1 — Advanced Mapping</h3>
+    <p>
+      Advanced Mapping provides enhanced spatial analysis tools for Urban Heat Island data,
+      including recursive subdivision, contour overlays, and kriging interpolation.
+      Use the link below to open the Advanced Mapping interface.
+    </p>
+    <p><a href="/advanced">Open Advanced Mapping ›</a></p>
+  </div>
+
+  <div class="placeholder-card">
+    <h3>Project 2 — City Traverse</h3>
+    <p>
+      City Traverse analyzes temperature data collected along urban driving routes to
+      study the Urban Heat Island effect. The pipeline reads a combined CSV of sensor
+      readings, applies corrections, and produces three interactive outputs: a
+      scatter plot of corrected temperature vs. local time, a distance-vs-temperature
+      plot with vapor pressure deficit (VPD) overlay, and a Folium map with
+      color-coded temperature markers that link back to the plots. Clicking a point
+      on any chart highlights the corresponding location on the map.
+    </p>
+    <p>
+      The script supports two distance modes — distance from the starting point or
+      cumulative travel distance — and can optionally restrict the x-axis to the
+      first half of the traverse for easier comparison of the outbound and return legs.
+    </p>
+    <p><a href="/traversescans">Open City Traverse Analysis ›</a></p>
+  </div>
+
+
+</body>
+</html>

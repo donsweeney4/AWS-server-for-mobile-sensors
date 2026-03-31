@@ -196,3 +196,73 @@ async def run_subsampling():
     except Exception as e:
         logger.exception("❌ Error running subsampling script")
         return jsonify({"status": "error", "message": "An unexpected error occurred", "details": str(e)}), 500
+
+##//#############################################################################
+## Route that runs the City Traverse temperature plot script  ##################
+
+@processing_bp.route('/run_traverse', methods=['POST'])
+async def run_traverse():
+    """
+    Finds the single CSV file in ./temporary_data/ and runs
+    plot_corrected_temperature.py with it, saving outputs to traverse_output/.
+    """
+    logger.info("📥 Received POST at /run_traverse")
+
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    tmp_dir = os.path.join(base_dir, 'temporary_data')
+    csv_files = glob.glob(os.path.join(tmp_dir, '*.csv'))
+
+    if not csv_files:
+        return jsonify({"status": "error", "message": "No CSV file found in temporary_data/"}), 400
+    if len(csv_files) > 1:
+        return jsonify({"status": "error", "message": f"Multiple CSV files found in temporary_data/: {[os.path.basename(f) for f in csv_files]}"}), 400
+
+    csv_path = csv_files[0]
+    script_path = os.path.join(base_dir, 'utils', 'plot_corrected_temperature.py')
+
+    output_dir = os.path.join(base_dir, 'traverse_output')
+    os.makedirs(output_dir, exist_ok=True)
+
+    params = {}
+    try:
+        body = await request.get_json(silent=True)
+        if body:
+            params = body
+    except Exception:
+        pass
+
+    distanceflag = int(params.get('distanceflag', 1))
+    halfgraph    = params.get('halfgraph', True)
+
+    cmd = [
+        'python3', script_path,
+        '--csv', csv_path,
+        '--distanceflag', str(distanceflag),
+        '--halfgraph', 'true' if halfgraph else 'false',
+    ]
+
+    # Patch output paths by setting env var so script saves into traverse_output/
+    env = os.environ.copy()
+
+    logger.info(f"Running traverse script: {' '.join(cmd)}")
+
+    def run_script():
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=output_dir,
+        )
+        return result
+
+    try:
+        result = await asyncio.to_thread(run_script)
+        if result.returncode == 0:
+            logger.info("Traverse script completed successfully")
+            return jsonify({"status": "ok", "message": "Analysis completed successfully", "output": result.stdout})
+        else:
+            logger.error(f"Traverse script failed: {result.stderr}")
+            return jsonify({"status": "error", "message": "Traverse script failed", "details": result.stderr}), 500
+    except Exception as e:
+        logger.exception("❌ Error running traverse script")
+        return jsonify({"status": "error", "message": "An unexpected error occurred", "details": str(e)}), 500

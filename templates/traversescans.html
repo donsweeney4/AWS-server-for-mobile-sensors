@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>City Traverse — Temperature Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f0f4f8;
+            color: #333;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .section {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .btn-run {
+            background-color: #2c3e50;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .btn-run:disabled {
+            background-color: #aaa;
+            cursor: not-allowed;
+        }
+
+        #traverse-status {
+            margin-top: 12px;
+            font-size: 14px;
+        }
+
+        .output-links a {
+            display: inline-block;
+            margin: 6px 10px 6px 0;
+            padding: 8px 14px;
+            background-color: #2c3e50;
+            color: #fff;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .output-links a:hover {
+            background-color: #3d5166;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead th {
+            background-color: #2c3e50;
+            color: #fff;
+            padding: 10px 12px;
+            text-align: left;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f7f9fb;
+        }
+
+        tbody td {
+            padding: 9px 12px;
+            vertical-align: middle;
+            border-bottom: 1px solid #e0e6ec;
+        }
+
+        tbody td:first-child {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 13px;
+            color: #1a6bbf;
+            white-space: nowrap;
+        }
+
+        tbody td.default-val {
+            color: #666;
+            font-size: 13px;
+        }
+
+        select {
+            width: 180px;
+            padding: 5px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #1a6bbf;
+            box-shadow: 0 0 0 2px rgba(26, 107, 191, 0.2);
+        }
+
+        .note {
+            font-size: 13px;
+            color: #666;
+            font-style: italic;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>City Traverse — Temperature Analysis</h2>
+
+    <div class="section">
+        <p>
+            This tool reads a combined CSV file from the <code>temporary_data/</code> folder,
+            applies temperature corrections, and produces three interactive outputs: a
+            corrected-temperature vs. local-time scatter plot, a distance-vs-temperature plot with
+            a Vapor Pressure Deficit (VPD) overlay, and a Folium map with color-coded temperature
+            markers. Clicking a point on the distance plot pans the map to that location.
+        </p>
+        <p class="note">
+            Place exactly one combined CSV file (with corrections) in the <code>temporary_data/</code>
+            folder before running.
+        </p>
+    </div>
+
+    <div class="section">
+        <h3>Run Parameters</h3>
+        <p>Adjust the options below, then click <strong>Run Analysis</strong>.</p>
+
+        <table id="params-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Description</th>
+                    <th>Default</th>
+                    <th>Your Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>--distanceflag</td>
+                    <td>
+                        How distance is calculated on the x-axis of the distance plot.<br>
+                        <em>Mode 1</em>: straight-line distance from the starting point.<br>
+                        <em>Mode 2</em>: cumulative distance traveled along the route.
+                    </td>
+                    <td class="default-val">2 (cumulative)</td>
+                    <td>
+                        <select id="distanceflag">
+                            <option value="1">1 — distance from first point</option>
+                            <option value="2" selected>2 — cumulative travel distance</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>--halfgraph</td>
+                    <td>
+                        When enabled, the x-axis of the distance plot is limited to the first
+                        half of the maximum distance, making it easier to compare outbound and
+                        return legs side by side.
+                    </td>
+                    <td class="default-val">true (half range)</td>
+                    <td>
+                        <select id="halfgraph">
+                            <option value="true" selected>true — show first half only</option>
+                            <option value="false">false — show full range</option>
+                        </select>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <br>
+        <button class="btn-run" id="btn-traverse" onclick="runTraverse()" style="background-color:#1a6bbf;color:#FFD700;">Run Analysis</button>
+        <button class="btn-run" onclick="resetDefaults()" style="background-color:#6c757d;margin-left:10px;">Reset to Defaults</button>
+        <div id="traverse-status"></div>
+    </div>
+
+    <div class="section">
+        <h3>Output Files</h3>
+        <p>
+            After a successful run, use the links below to view the results. The combined plot
+            embeds the time plot, the distance/VPD plot, and the Folium map in a single page.
+        </p>
+        <div class="output-links">
+            <a href="/traverse_output/combined_temperature_plots.html" target="_blank">Combined Interactive Plot</a>
+            <a href="/traverse_output/temperature_map.html" target="_blank">Folium Temperature Map</a>
+        </div>
+    </div>
+
+    <script>
+        async function runTraverse() {
+            const btn = document.getElementById('btn-traverse');
+            const status = document.getElementById('traverse-status');
+
+            const params = {
+                distanceflag: parseInt(document.getElementById('distanceflag').value, 10),
+                halfgraph:    document.getElementById('halfgraph').value === 'true',
+            };
+
+            btn.disabled = true;
+            status.textContent = 'Running analysis… this may take a moment.';
+            status.style.color = '#555';
+
+            try {
+                const response = await fetch('/run_traverse', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                const data = await response.json();
+                if (data.status === 'ok') {
+                    status.textContent = 'Analysis completed successfully. Use the links above to view the results.';
+                    status.style.color = 'green';
+                } else {
+                    status.textContent = 'Error: ' + (data.message || 'Unknown error') + (data.details ? ' — ' + data.details : '');
+                    status.style.color = 'red';
+                }
+            } catch (err) {
+                status.textContent = 'Request failed: ' + err;
+                status.style.color = 'red';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function resetDefaults() {
+            document.getElementById('distanceflag').value = '2';
+            document.getElementById('halfgraph').value = 'true';
+        }
+    </script>
+</body>
+</html>

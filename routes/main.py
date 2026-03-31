@@ -112,6 +112,40 @@ async def advanced():
     return await render_template("advanced.html")
 
 ##//#############################################################################
+UTILS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "utils")
+
+@main_bp.route('/source/utils/<path:filename>')
+async def view_source(filename):
+    """Serves Python source files from the utils directory as plain text."""
+    response = await send_from_directory(UTILS_DIR, filename)
+    response.headers['Content-Type'] = 'text/plain; charset=utf-8'
+    return response
+
+##//#############################################################################
+@main_bp.route('/specialprojects')
+async def specialprojects():
+    """Renders the special projects page."""
+    logger.info("Special projects route hit")
+    return await render_template("specialprojects.html")
+
+##//#############################################################################
+@main_bp.route('/traversescans')
+async def traversescans():
+    """Renders the City Traverse scans page."""
+    logger.info("Traverse scans route hit")
+    return await render_template("traversescans.html")
+
+TRAVERSE_OUTPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "traverse_output")
+
+@main_bp.route('/traverse_output/<path:filename>')
+async def traverse_output(filename):
+    """Serves files from the traverse_output directory."""
+    response = await send_from_directory(TRAVERSE_OUTPUT_DIR, filename)
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    return response
+
+##//#############################################################################
 @main_bp.route('/mappingparameters')
 async def mappingparameters():
     """Renders the custom mapping parameters page."""
