@@ -1,5 +1,5 @@
-<!-- traversescans.html: City Traverse Analysis page; configures and triggers a city traverse run
-     (distance mode, half-graph option) on a CSV uploaded to temporary_data/.
+<!-- traversescans.html: City Traverse Analysis page; triggers a city traverse run using default
+     parameters on a CSV uploaded to temporary_data/.
      Called from: specialprojects.html link (/traversescans).
      Calls out to: POST /run_traverse (triggers city_traverse.py); links to
                    /traverse_output/combined_temperature_plots.html and /traverse_output/temperature_map.html. -->
@@ -134,67 +134,15 @@
     <div class="section">
         <p>
             This tool reads a combined CSV file from the <code>temporary_data/</code> folder,
-            applies temperature corrections, and produces three interactive outputs: a
-            corrected-temperature vs. local-time scatter plot, a distance-vs-temperature plot with
+            applies temperature corrections, and produces interactive outputs: a distance-vs-temperature plot with
             a Vapor Pressure Deficit (VPD) overlay, and a Folium map with color-coded temperature
             markers. Clicking a point on the distance plot pans the map to that location.
         </p>
-        <p class="note">
-            Place exactly one combined CSV file (with corrections) in the <code>temporary_data/</code>
-            folder before running.
-        </p>
+       
     </div>
 
     <div class="section">
-        <h3>Run Parameters</h3>
-        <p>Adjust the options below, then click <strong>Run Analysis</strong>.</p>
-
-        <table id="params-table">
-            <thead>
-                <tr>
-                    <th>Parameter</th>
-                    <th>Description</th>
-                    <th>Default</th>
-                    <th>Your Value</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>--distanceflag</td>
-                    <td>
-                        How distance is calculated on the x-axis of the distance plot.<br>
-                        <em>Mode 1</em>: straight-line distance from the starting point.<br>
-                        <em>Mode 2</em>: cumulative distance traveled along the route.
-                    </td>
-                    <td class="default-val">2 (cumulative)</td>
-                    <td>
-                        <select id="distanceflag">
-                            <option value="1">1 — distance from first point</option>
-                            <option value="2" selected>2 — cumulative travel distance</option>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td>--halfgraph</td>
-                    <td>
-                        When enabled, the x-axis of the distance plot is limited to the first
-                        half of the maximum distance, making it easier to compare outbound and
-                        return legs side by side.
-                    </td>
-                    <td class="default-val">true (half range)</td>
-                    <td>
-                        <select id="halfgraph">
-                            <option value="true" selected>true — show first half only</option>
-                            <option value="false">false — show full range</option>
-                        </select>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-
-        <br>
         <button class="btn-run" id="btn-traverse" onclick="runTraverse()" style="background-color:#1a6bbf;color:#FFD700;">Run Analysis</button>
-        <button class="btn-run" onclick="resetDefaults()" style="background-color:#6c757d;margin-left:10px;">Reset to Defaults</button>
         <div id="traverse-status"></div>
     </div>
 
@@ -215,11 +163,6 @@
             const btn = document.getElementById('btn-traverse');
             const status = document.getElementById('traverse-status');
 
-            const params = {
-                distanceflag: parseInt(document.getElementById('distanceflag').value, 10),
-                halfgraph:    document.getElementById('halfgraph').value === 'true',
-            };
-
             btn.disabled = true;
             status.textContent = 'Running analysis… this may take a moment.';
             status.style.color = '#555';
@@ -228,7 +171,7 @@
                 const response = await fetch('/run_traverse', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(params)
+                    body: JSON.stringify({})
                 });
                 const data = await response.json();
                 if (data.status === 'ok') {
@@ -244,11 +187,6 @@
             } finally {
                 btn.disabled = false;
             }
-        }
-
-        function resetDefaults() {
-            document.getElementById('distanceflag').value = '2';
-            document.getElementById('halfgraph').value = 'true';
         }
     </script>
 </body>

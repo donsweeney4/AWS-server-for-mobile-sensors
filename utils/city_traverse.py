@@ -184,7 +184,7 @@ def make_folium_map(df: "pd.DataFrame", x_col: str, csv_path: str, output_map_ht
 
 def make_plot(
     csv_path: str = "RHS031126_combined_data_with_corrections.csv",
-    distanceflag: int = 1,
+    distanceflag: int = 2,
     halfgraph: bool = True,
     output_augmented_csv: str = "Augmented_data_with_new_row_and_distance.csv",
     output_map_html: str = "temperature_map.html",

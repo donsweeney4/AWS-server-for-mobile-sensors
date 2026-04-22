@@ -231,7 +231,7 @@ async def run_traverse():
     except Exception:
         pass
 
-    distanceflag = int(params.get('distanceflag', 1))
+    distanceflag = int(params.get('distanceflag', 2))
     halfgraph    = params.get('halfgraph', True)
 
     # Pull processing parameters saved to session by renderprocessdata.html
