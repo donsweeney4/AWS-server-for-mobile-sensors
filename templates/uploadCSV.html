@@ -1,3 +1,6 @@
+<!-- uploadCSV.html: CSV upload page for submitting a new sensor data file to S3.
+     Called from: index.html navigation (loaded in iframe).
+     Calls out to: GET /get_presigned_url (obtain S3 presigned URL), then PUT directly to S3. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>

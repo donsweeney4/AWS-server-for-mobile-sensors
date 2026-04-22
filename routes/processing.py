@@ -204,7 +204,7 @@ async def run_subsampling():
 async def run_traverse():
     """
     Finds the single CSV file in ./temporary_data/ and runs
-    plot_corrected_temperature.py with it, saving outputs to traverse_output/.
+    city_traverse.py with it, saving outputs to traverse_output/.
     """
     logger.info("📥 Received POST at /run_traverse")
 
@@ -218,7 +218,7 @@ async def run_traverse():
         return jsonify({"status": "error", "message": f"Multiple CSV files found in temporary_data/: {[os.path.basename(f) for f in csv_files]}"}), 400
 
     csv_path = csv_files[0]
-    script_path = os.path.join(base_dir, 'utils', 'plot_corrected_temperature.py')
+    script_path = os.path.join(base_dir, 'utils', 'city_traverse.py')
 
     output_dir = os.path.join(base_dir, 'traverse_output')
     os.makedirs(output_dir, exist_ok=True)
@@ -234,11 +234,33 @@ async def run_traverse():
     distanceflag = int(params.get('distanceflag', 1))
     halfgraph    = params.get('halfgraph', True)
 
+    # Pull processing parameters saved to session by renderprocessdata.html
+    root_name   = session.get('campaign_id', '')
+    bucket_name = session.get('selected_location', '')
+    start_adj   = float(session.get('start_time_adjustment_minutes', 1.0))
+    end_adj     = float(session.get('end_time_adjustment_minutes', 1.0))
+    cutoff_spd  = float(session.get('cutoff_speed_MPH', 0.0))
+    slope_opt   = int(session.get('slope_option', 1))
+    temp_drift  = float(session.get('temperature_drift_f', 0.0))
+    min_q       = int(session.get('min_q', 5))
+    max_q       = int(session.get('max_q', 95))
+    solid_color = bool(session.get('solid_color', False))
+
     cmd = [
         'python3', script_path,
         '--csv', csv_path,
         '--distanceflag', str(distanceflag),
         '--halfgraph', 'true' if halfgraph else 'false',
+        '--root_name',                     root_name,
+        '--bucket_name',                   bucket_name,
+        '--start_time_adjustment_minutes', str(start_adj),
+        '--end_time_adjustment_minutes',   str(end_adj),
+        '--cutoff_speed_MPH',              str(cutoff_spd),
+        '--slope_option',                  str(slope_opt),
+        '--temperature_drift_f',           str(temp_drift),
+        '--color_table_min_quantile',      str(min_q),
+        '--color_table_max_quantile',      str(max_q),
+        '--solid_color',                   'true' if solid_color else 'false',
     ]
 
     # Patch output paths by setting env var so script saves into traverse_output/

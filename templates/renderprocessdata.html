@@ -1,3 +1,8 @@
+<!-- renderprocessdata.html: Main processing form for a selected campaign; sets route pruning, speed cutoff,
+     temperature drift, color table quantiles, and solid-color options before running process_routes.py.
+     Called from: campaign.html after a campaign is selected (redirects to /renderprocessdata).
+     Calls out to: POST /run_processing (triggers process_routes.py), POST /log_activity; on success
+                   displays a summary and links to download.html outputs. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>

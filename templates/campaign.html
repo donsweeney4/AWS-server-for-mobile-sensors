@@ -1,3 +1,7 @@
+<!-- campaign.html: Campaign selection page; lists available campaigns and lets the user pick one.
+     Called from: index.html navigation (loaded in iframe).
+     Calls out to: GET /get_campaign_names (populate table), POST /set_campaign_session (select campaign),
+                   POST /update_hidden (toggle campaign visibility); redirects to /renderprocessdata. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>

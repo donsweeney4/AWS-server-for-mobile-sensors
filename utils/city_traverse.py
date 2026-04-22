@@ -1,3 +1,6 @@
+# Processes a mobile sensor CSV from a city traverse: applies temperature corrections,
+# computes travel distance and VPD, then generates an interactive Folium map,
+# a combined temperature time-series plot, and a VPD vs. travel distance plot.
 
 import argparse
 import pandas as pd
@@ -11,10 +14,11 @@ import branca.colormap as cm
 from pathlib import Path
 
 
-def make_folium_map(df: "pd.DataFrame", x_col: str, csv_path: str, output_map_html: str) -> str:
+def make_folium_map(df: "pd.DataFrame", x_col: str, csv_path: str, output_map_html: str,
+                    color_table_min_quantile: int = 5, color_table_max_quantile: int = 95) -> str:
     """Build a folium temperature map from df and save it. Returns the rendered HTML string."""
-    color_table_min = float(np.percentile(df["corrected_temperature_f"].dropna(), 5))
-    color_table_max = float(np.percentile(df["corrected_temperature_f"].dropna(), 95))
+    color_table_min = float(np.percentile(df["corrected_temperature_f"].dropna(), color_table_min_quantile))
+    color_table_max = float(np.percentile(df["corrected_temperature_f"].dropna(), color_table_max_quantile))
     dtemp = (color_table_max - color_table_min) / 4
     index = [color_table_min + i * dtemp for i in range(5)]
 
@@ -92,11 +96,11 @@ def make_folium_map(df: "pd.DataFrame", x_col: str, csv_path: str, output_map_ht
                 <span class="val">{len(df)}</span>
             </div>
             <div class="row">
-                <span class="lbl">Temp min (5%):</span>
+                <span class="lbl">Temp min ({color_table_min_quantile}%):</span>
                 <span class="val">{color_table_min:.2f} °F</span>
             </div>
             <div class="row">
-                <span class="lbl">Temp max (95%):</span>
+                <span class="lbl">Temp max ({color_table_max_quantile}%):</span>
                 <span class="val">{color_table_max:.2f} °F</span>
             </div>
         </div>
@@ -186,6 +190,8 @@ def make_plot(
     output_map_html: str = "temperature_map.html",
     output_vpd_html: str = "vpd_vs_travel_distance.html",
     output_combined_html: str = "combined_temperature_plots.html",
+    color_table_min_quantile: int = 5,
+    color_table_max_quantile: int = 95,
 ) -> None:
     data_path = Path(csv_path)
     if not data_path.exists():
@@ -427,7 +433,9 @@ def make_plot(
         ),
     )
 
-    folium_html = make_folium_map(df, x_col, csv_path, output_map_html)
+    folium_html = make_folium_map(df, x_col, csv_path, output_map_html,
+                                  color_table_min_quantile=color_table_min_quantile,
+                                  color_table_max_quantile=color_table_max_quantile)
 
     vpd_plot_df = df[["travel_distance_km", "vpd_kPa", "local_row_number", "time_since_start"]].dropna()
     vpd_fig = px.scatter(
@@ -600,5 +608,38 @@ if __name__ == "__main__":
         metavar="BOOL",
         help="If True (default), limit x-axis to half the maximum distance. Use --halfgraph false for full range.",
     )
+    # Parameters forwarded from renderprocessdata.html via the session
+    parser.add_argument("--root_name",                      default="",  help="Campaign root name (S3 prefix).")
+    parser.add_argument("--bucket_name",                    default="",  help="S3 bucket name.")
+    parser.add_argument("--start_time_adjustment_minutes",  type=float,  default=1.0)
+    parser.add_argument("--end_time_adjustment_minutes",    type=float,  default=1.0)
+    parser.add_argument("--cutoff_speed_MPH",               type=float,  default=0.0)
+    parser.add_argument("--slope_option",                   type=int,    default=1)
+    parser.add_argument("--temperature_drift_f",            type=float,  default=0.0)
+    parser.add_argument("--color_table_min_quantile",       type=int,    default=5)
+    parser.add_argument("--color_table_max_quantile",       type=int,    default=95)
+    parser.add_argument("--solid_color",
+                        type=lambda v: v.lower() not in ("false", "0", "no"),
+                        default=False, metavar="BOOL")
     args = parser.parse_args()
-    make_plot(csv_path=args.csv, distanceflag=args.distanceflag, halfgraph=args.halfgraph)
+
+    if args.root_name and args.bucket_name:
+        import sys, os as _os
+        sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+        from process_routes import mainProcessData
+        mainProcessData(
+            root_name=args.root_name,
+            bucket_name=args.bucket_name,
+            start_time_adjustment_minutes=0.0,
+            end_time_adjustment_minutes=0.0,
+            cutoff_speed_MPH=0.5,
+            slope_option=args.slope_option,
+            temperature_drift_f=args.temperature_drift_f,
+            color_table_min_quantile=args.color_table_min_quantile,
+            color_table_max_quantile=args.color_table_max_quantile,
+            solid_color=args.solid_color,
+        )
+
+    make_plot(csv_path=args.csv, distanceflag=args.distanceflag, halfgraph=args.halfgraph,
+              color_table_min_quantile=args.color_table_min_quantile,
+              color_table_max_quantile=args.color_table_max_quantile)
